@@ -13,9 +13,10 @@ body.gfx-hidden .gfx{opacity:0;pointer-events:none}
 
 :root{--score-width:575px}
 .stage{width:var(--score-width);max-width:calc(100vw - 12px);margin:6px;transform:scale(var(--scale));transform-origin:top left}
-.scorebug{width:100%;height:54px;display:grid;grid-template-columns:minmax(0,1fr) 106px minmax(0,1fr) 58px;background:var(--ink);overflow:hidden}
+.scorebug{width:100%;height:54px;display:grid;grid-template-columns:minmax(0,1fr) 106px minmax(0,1fr) 70px;background:var(--ink);overflow:hidden}
 .team{min-width:0;display:flex;align-items:center;gap:7px;padding:4px 7px;background:#141d25}
-.team.b{flex-direction:row-reverse;text-align:right}
+/* Vierasjoukkue: nimi ensin, logo aivan oman lohkon oikeaan reunaan. */
+.team.b{flex-direction:row;justify-content:space-between;text-align:left}
 .logo{width:45px;height:45px;flex:0 0 45px}
 .fallback{width:45px;height:45px;font-size:15px}
 .team-name{font-size:15px;font-weight:900;line-height:1.05;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
@@ -34,7 +35,7 @@ body.gfx-hidden .gfx{opacity:0;pointer-events:none}
 .event-row.penalty .event-mark{color:#111;}
 @keyframes eventIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:480px){.event-row{grid-template-columns:72px minmax(0,1fr) 30px;min-height:48px}.event-time{font-size:12px}.event-player{font-size:12px}.event-detail{font-size:10px}.event-main{padding:5px 7px}}
-@media(max-width:480px){.scorebug{grid-template-columns:minmax(0,1fr) 78px minmax(0,1fr) 48px}.team{gap:4px;padding:3px}.logo,.fallback{width:34px;height:34px;flex-basis:34px}.team-name{font-size:12px}.score{font-size:19px}.clock{font-size:13px}}
+@media(max-width:480px){.scorebug{grid-template-columns:minmax(0,1fr) 78px minmax(0,1fr) 56px}.team{gap:4px;padding:3px}.logo,.fallback{width:34px;height:34px;flex-basis:34px}.team-name{font-size:12px}.score{font-size:19px}.clock{font-size:13px}}
 </style></head><body><div class="gfx stage"><div class="scorebug">
 <div class="team a"><div id="logoA" class="fallback">A</div><div id="teamA" class="team-name">KOTI</div></div>
 <div class="score" id="score">0 – 0</div>

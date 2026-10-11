@@ -100,3 +100,10 @@ Halutessasi voit edelleen asettaa manuaalisen yliajon `period`-parametrilla:
 
 Jos rajapinta ei palauta voimassa olevaa erätietoa, grafiikka näyttää viivan (`—`) eikä arvaa eräksi ensimmäistä erää. Ottelun tunnisteena hyväksytään `match_id`, `ottelu` tai `match`.
 
+
+
+## Tulostaulun asettelu – viimeisin viilaus
+
+- Vierasjoukkueen nimi näkyy ennen logoa; logo sijoittuu oikeaan reunaan.
+- Pelikello-/eränäyttöalue on hieman leveämpi, jotta esimerkiksi `2. ERÄ` mahtuu paremmin.
+- Eränäytön URL-parametrit `clock=period` ja `clockmode=period` säilyvät käytössä.
