@@ -28,7 +28,7 @@ body.gfx-hidden .gfx{opacity:0;pointer-events:none}
 .titlebar{display:flex;justify-content:space-between;align-items:center;gap:16px;background:var(--ink);border-top:4px solid var(--accent);padding:12px 18px}
 .title{font-size:22px;line-height:1.1;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
 .competition{font-size:13px;color:var(--muted);font-weight:800;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:52%}
-.events{display:flex;flex-direction:column;gap:6px;background:rgba(16,24,32,.97);padding:8px 8px 10px;max-height:calc(100vh - 182px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
+.events{display:flex;flex-direction:column;gap:6px;background:rgba(16,24,32,.97);padding:8px 8px 10px;max-height:none;overflow:visible;overscroll-behavior:contain;scrollbar-width:none}
 .events::-webkit-scrollbar{display:none}
 .event-row{display:grid;grid-template-columns:116px minmax(0,1fr) 104px;gap:0;align-items:stretch;min-height:62px;background:#fff;color:var(--ink);border-radius:5px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.16)}
 .event-time{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:var(--accent);font-size:18px;font-weight:900;line-height:1.05;text-align:center;padding:6px}
@@ -48,7 +48,7 @@ body.gfx-hidden .gfx{opacity:0;pointer-events:none}
 .event-row.timeout .event-side{background:#e5fbfc}
 .empty{min-height:100px;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;color:var(--muted);font-size:17px;font-weight:800;border:1px dashed #485660;background:rgba(27,42,53,.7)}
 .foot{padding:6px 12px 0;color:#c2ccd3;font-size:11px;text-align:right;font-weight:700;letter-spacing:.04em}
-@media(max-width:800px){.stage{left:4px;top:4px;max-width:calc(100vw - 8px)}.header{grid-template-columns:minmax(0,1fr) 118px minmax(0,1fr);min-height:86px}.team{gap:7px;padding:8px}.logo,.fallback{width:42px;height:42px;flex-basis:42px;font-size:14px}.teamname{font-size:clamp(12px,2.4vw,19px)}.score{font-size:29px}.clock{font-size:15px;margin-top:4px}.period{font-size:9px}.titlebar{padding:8px 10px}.title{font-size:16px}.competition{font-size:10px}.events{padding:5px;gap:4px;max-height:calc(100vh - 132px)}.event-row{grid-template-columns:70px minmax(0,1fr) 72px;min-height:51px}.event-time{font-size:13px}.event-time small{font-size:8px}.event-main{gap:6px;padding:5px 7px;flex-wrap:wrap}.team-pill{font-size:9px;max-width:100%;gap:4px}.team-dot{width:6px;height:6px;flex-basis:6px}.event-name{font-size:12px}.event-detail{font-size:10px}.event-side{padding:4px}.type{font-size:9px}.meta{font-size:12px}.foot{font-size:9px}}
+@media(max-width:800px){.stage{left:calc(50% + var(--offset-x));top:calc(8px + var(--offset-y));max-width:none}.header{grid-template-columns:minmax(0,1fr) 118px minmax(0,1fr);min-height:86px}.team{gap:7px;padding:8px}.logo,.fallback{width:42px;height:42px;flex-basis:42px;font-size:14px}.teamname{font-size:clamp(12px,2.4vw,19px)}.score{font-size:29px}.clock{font-size:15px;margin-top:4px}.period{font-size:9px}.titlebar{padding:8px 10px}.title{font-size:16px}.competition{font-size:10px}.events{padding:5px;gap:4px;max-height:none;overflow:visible}.event-row{grid-template-columns:70px minmax(0,1fr) 72px;min-height:51px}.event-time{font-size:13px}.event-time small{font-size:8px}.event-main{gap:6px;padding:5px 7px;flex-wrap:wrap}.team-pill{font-size:9px;max-width:100%;gap:4px}.team-dot{width:6px;height:6px;flex-basis:6px}.event-name{font-size:12px}.event-detail{font-size:10px}.event-side{padding:4px}.type{font-size:9px}.meta{font-size:12px}.foot{font-size:9px}}
 </style>
 </head>
 <body>
@@ -162,28 +162,31 @@ if(q.get('preview')==='1')demo();else{update();setInterval(update,refresh*1000)}
 </script>
 
 <script>
-/* URL-kohtainen koon hienosäätö: width= ja height= ovat pikseleitä ennen yleistä scale-kerrointa. */
-(function applyManualDimensions(){
+/* URL-kohtainen koon hienosäätö + automaattinen sovitus selainlähteen ruutuun.
+   width/height ovat pyydetyt mitat ennen scale-kerrointa. Jos sisältö ei mahdu,
+   koko grafiikka skaalataan yhtenäisesti pienemmäksi (mittasuhteet säilyvät). */
+(function applyManualDimensionsAndAutoFit(){
   const sizeParams = new URLSearchParams(window.location.search);
   const sizeStage = document.querySelector('.stage');
   if (!sizeStage) return;
-  const defaultWidth = 1200;
   const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
   const queryNumber = (key, fallback, min, max) => {
     if (!sizeParams.has(key)) return fallback;
     const n = Number(sizeParams.get(key));
     return Number.isFinite(n) && n > 0 ? clamp(n, min, max) : fallback;
   };
-  const targetWidth = queryNumber('width', defaultWidth, 240, 2400);
+  const targetWidth = queryNumber('width', 1200, 240, 2400);
   const requestedHeight = sizeParams.has('height') ? queryNumber('height', null, 40, 2160) : null;
-  const overallScale = queryNumber('scale', 1, 0.5, 2.5);
+  const requestedScale = queryNumber('scale', 1, 0.5, 2.5);
+  const offsetXValue = Number.isFinite(Number(sizeParams.get('offsetX'))) ? Number(sizeParams.get('offsetX') || 0) : 0;
+  const offsetYValue = Number.isFinite(Number(sizeParams.get('offsetY'))) ? Number(sizeParams.get('offsetY') || 0) : 0;
   const root = document.documentElement;
-  root.style.setProperty('--scale', String(overallScale));
   root.style.setProperty('--gfx-width', targetWidth + 'px');
-  root.style.setProperty('--score-width', targetWidth + 'px');
-  /* Inline-arvot voittavat vanhat sivukohtaiset max-width/width-säännöt. */
   sizeStage.style.width = targetWidth + 'px';
   sizeStage.style.maxWidth = 'none';
+  /* Position is explicit so it is consistent at desktop and mobile viewport sizes. */
+  sizeStage.style.left = 'calc(50% + ' + offsetXValue + 'px)';
+  sizeStage.style.top = Math.max(8, 8 + offsetYValue) + 'px';
 
   let debugBox = null;
   if (sizeParams.get('debug') === '1') {
@@ -194,19 +197,40 @@ if(q.get('preview')==='1')demo();else{update();setInterval(update,refresh*1000)}
   function updateSize(){
     const naturalHeight = sizeStage.offsetHeight;
     if (!naturalHeight) return;
-    const verticalFit = requestedHeight === null ? 1 : requestedHeight / naturalHeight;
-    root.style.setProperty('--scale-y', String(overallScale * verticalFit));
+
+    const top = Math.max(8, 8 + offsetYValue);
+    const centerX = window.innerWidth / 2 + offsetXValue;
+    const availableLeft = Math.max(0, centerX - 8);
+    const availableRight = Math.max(0, window.innerWidth - 8 - centerX);
+    const availableWidth = 2 * Math.min(availableLeft, availableRight);
+    const availableHeight = Math.max(0, window.innerHeight - top - 8);
+
+    const baseHeightScale = requestedHeight === null ? requestedScale : requestedScale * requestedHeight / naturalHeight;
+    const nominalWidth = targetWidth * requestedScale;
+    const nominalHeight = naturalHeight * baseHeightScale;
+    const fitByWidth = nominalWidth > 0 ? availableWidth / nominalWidth : 1;
+    const fitByHeight = nominalHeight > 0 ? availableHeight / nominalHeight : 1;
+    /* Never enlarge automatically: only reduce enough to keep the entire graphic on-screen. */
+    const autoFit = Math.max(0.001, Math.min(1, fitByWidth, fitByHeight));
+    const finalScaleX = requestedScale * autoFit;
+    const finalScaleY = baseHeightScale * autoFit;
+    root.style.setProperty('--scale', String(finalScaleX));
+    root.style.setProperty('--scale-y', String(finalScaleY));
+
     if (debugBox) {
       const r = sizeStage.getBoundingClientRect();
-      debugBox.textContent = 'KOKOSÄÄDÖT\nwidth=' + targetWidth + ' px\nheight=' + (requestedHeight === null ? 'auto (' + Math.round(naturalHeight) + ' px)' : requestedHeight + ' px') + '\nscale=' + overallScale + '\nNäkyvä laatikko: ' + Math.round(r.width) + ' × ' + Math.round(r.height) + ' px';
+      debugBox.textContent = 'KOKOSÄÄDÖT / AUTOSOVITUS\nwidth=' + targetWidth + ' px\nheight=' + (requestedHeight === null ? 'auto (' + Math.round(naturalHeight) + ' px)' : requestedHeight + ' px') + '\nscale=' + requestedScale + '\nautoFit=' + autoFit.toFixed(3) + '\nNäkyvä laatikko: ' + Math.round(r.width) + ' × ' + Math.round(r.height) + ' px';
     }
   }
-  /* Sisältökorkeus voi muuttua, kun pelaajat/tapahtumat päivittyvät. */
   if ('ResizeObserver' in window) {
     const ro = new ResizeObserver(() => requestAnimationFrame(updateSize));
     ro.observe(sizeStage);
   }
   window.addEventListener('resize', updateSize);
+  if ('MutationObserver' in window) {
+    const mo = new MutationObserver(() => requestAnimationFrame(updateSize));
+    mo.observe(sizeStage, {childList:true,subtree:true,characterData:true});
+  }
   requestAnimationFrame(updateSize);
 })();
 </script>
