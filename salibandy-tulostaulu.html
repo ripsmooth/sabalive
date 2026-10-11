@@ -22,12 +22,24 @@ body.gfx-hidden .gfx{opacity:0;pointer-events:none}
 .score{background:var(--accent);color:var(--ink);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;white-space:nowrap;clip-path:polygon(10% 0,100% 0,90% 100%,0 100%);margin:0 -1px}
 .clock{background:#1b2a35;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:900;white-space:nowrap;padding:0 3px}
 .error{position:fixed;left:6px;top:64px}
+/* Tapahtumat tulostaulun alla */
+.events{width:100%;display:flex;flex-direction:column;gap:6px;margin-top:6px;}
+.event-row{width:100%;min-height:54px;display:grid;grid-template-columns:96px minmax(0,1fr) 44px;align-items:stretch;overflow:hidden;border-radius:6px;background:#fff;color:#101820;box-shadow:0 2px 7px rgba(0,0,0,.16);animation:eventIn .18s ease-out;}
+.event-time{display:flex;flex-direction:column;align-items:center;justify-content:center;background:#00e5ee;color:#101820;font-size:15px;font-weight:900;line-height:1.15;text-align:center;padding:5px 3px;}
+.event-row.penalty .event-time{background:#111;color:#fff;}
+.event-main{min-width:0;display:flex;flex-direction:column;justify-content:center;padding:7px 10px;line-height:1.15;}
+.event-player{font-size:14px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.event-detail{font-size:11px;font-weight:700;color:#303943;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.event-mark{display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;writing-mode:vertical-rl;transform:rotate(180deg);letter-spacing:.4px;color:#4b5563;}
+.event-row.penalty .event-mark{color:#111;}
+@keyframes eventIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:480px){.event-row{grid-template-columns:72px minmax(0,1fr) 30px;min-height:48px}.event-time{font-size:12px}.event-player{font-size:12px}.event-detail{font-size:10px}.event-main{padding:5px 7px}}
 @media(max-width:480px){.scorebug{grid-template-columns:minmax(0,1fr) 78px minmax(0,1fr) 48px}.team{gap:4px;padding:3px}.logo,.fallback{width:34px;height:34px;flex-basis:34px}.team-name{font-size:12px}.score{font-size:19px}.clock{font-size:13px}}
 </style></head><body><div class="gfx stage"><div class="scorebug">
 <div class="team a"><div id="logoA" class="fallback">A</div><div id="teamA" class="team-name">KOTI</div></div>
 <div class="score" id="score">0 – 0</div>
 <div class="team b"><div id="teamB" class="team-name">VIERAS</div><div id="logoB" class="fallback">B</div></div>
-<div class="clock" id="clock">00:00</div></div></div><div id="error" class="err hidden"></div>
+<div class="clock" id="clock">00:00</div></div><div id="events" class="events" aria-live="polite"></div></div><div id="error" class="err hidden"></div>
 <script>
 const q=new URLSearchParams(location.search);
 const matchId=q.get('match_id')||q.get('ottelu')||'953141';
@@ -83,6 +95,47 @@ function startVisibility(key,defaultVisible){const remote=new URLSearchParams(lo
 function showError(err){const e=$('error');if(e){e.textContent='Salibandy: '+(err?.message||err);e.classList.remove('hidden')}}
 function clearError(){const e=$('error');if(e)e.classList.add('hidden')}
 
-async function update(){if(updateInFlight)return;updateInFlight=true;try{const m=await getMatch();const t=teamFields(m),sc=getScore(m);setText('teamA',t.a.name);setText('teamB',t.b.name);setLogo('logoA',t.a.logo,t.a.name);setLogo('logoB',t.b.logo,t.b.name);setText('score',String(sc.a)+' – '+String(sc.b));setText('clock',matchClock(m)||'');clearError()}catch(e){showError(e)}finally{updateInFlight=false}}
-startVisibility('scorebug',true);update();setInterval(update,refresh*1000);setInterval(tickClock,250);
+const activeEvents=[];let knownEventIds=null;
+function eventKey(e,type){return String(e.event_id||[type,e.time,e.player_id,e.player_name,e.description].join('_'))}
+function collectMatchEvents(m){
+ const out=[];
+ for(const g of (Array.isArray(m.goals)?m.goals:[])) out.push({...g,_kind:'goal',_key:eventKey(g,'goal')});
+ for(const b of (Array.isArray(m.bookings)?m.bookings:[])) out.push({...b,_kind:'penalty',_key:eventKey(b,'penalty')});
+ return out;
+}
+function eventMarkup(e,m){
+ const penalty=e._kind==='penalty';
+ const number=e.player_shirt_number??e.shirt_number??'';
+ const name=e.player_name||'Pelaaja';
+ const time=e.time_min||e.time||'';
+ let detail='';
+ if(penalty){const mins=String(e.code||'').match(/\d+/)?.[0]||'';detail=(mins?mins+' min':'Rangaistus')+(e.description_text?' · '+e.description_text:(e.description&&e.description!==' '? ' · '+e.description:''));}
+ else {const assist=e.player_2_name||e.assist_name||e.assisting_player_name||'';detail=assist?'('+((e.shirt_2_number?'#'+e.shirt_2_number+' ':'')+assist)+')':('Tulos '+(e.score_A??m.live_A??0)+'–'+(e.score_B??m.live_B??0));}
+ const teamId=String(e.team_id||'');const home=teamId&&teamId===String(m.team_A_id||'');const team=teamId&&teamId===String(m.team_B_id||'')?m.team_B_name:(home?m.team_A_name:'');
+ return `<div class="event-row ${penalty?'penalty':'goal'}"><div class="event-time"><span>${esc(time)}</span><span>${penalty?esc((String(e.code||'2min').match(/\d+/)?.[0]||'2')+' min'):esc((e.score_A??m.live_A??0)+'–'+(e.score_B??m.live_B??0))}</span></div><div class="event-main"><div class="event-player">${esc(number?'#'+number+' ':'')}${esc(name)}</div><div class="event-detail">${esc(detail||team|| (penalty?'Rangaistus':'Maali'))}</div></div><div class="event-mark">${penalty?'JÄÄHY':'MAALI'}</div></div>`;
+}
+function renderEvents(m){
+ const current=collectMatchEvents(m);const ids=new Set(current.map(e=>e._key));
+ if(knownEventIds===null){knownEventIds=ids;}
+ else {
+   const fresh=current.filter(e=>!knownEventIds.has(e._key));
+   fresh.sort((a,b)=>String(b.wall_time||'').localeCompare(String(a.wall_time||'')));
+   for(const e of fresh){activeEvents.unshift({event:e,match:m,createdAt:Date.now()});}
+   knownEventIds=ids;
+ }
+ const now=Date.now();
+ for(let i=activeEvents.length-1;i>=0;i--) if(now-activeEvents[i].createdAt>=20000)activeEvents.splice(i,1);
+ activeEvents.splice(3);
+ const el=$('events');if(el)el.innerHTML=activeEvents.map(x=>eventMarkup(x.event,x.match)).join('');
+}
+async function update(){if(updateInFlight)return;updateInFlight=true;try{const m=await getMatch();const t=teamFields(m),sc=getScore(m);setText('teamA',t.a.name);setText('teamB',t.b.name);setLogo('logoA',t.a.logo,t.a.name);setLogo('logoB',t.b.logo,t.b.name);setText('score',String(sc.a)+' – '+String(sc.b));setText('clock',matchClock(m)||'');renderEvents(m);clearError()}catch(e){showError(e)}finally{updateInFlight=false}}
+startVisibility('scorebug',true);
+if(q.get('preview')==='1'){
+ setText('teamA','PIRKAT');setText('teamB','JOSBA');setText('score','3 – 2');setText('clock','20:00');
+ const demo=[
+  {event:{_kind:'goal',time:'26:52',score_A:3,score_B:2,player_shirt_number:'2',player_name:'Tiainen Mico-Matias',player_2_name:'Veijalainen Niklas',shirt_2_number:'28'},match:{live_A:3,live_B:2},createdAt:Date.now()},
+  {event:{_kind:'penalty',time:'19:10',time_min:'19',code:'2min',description_text:'Varomaton fyysinen pelaaminen',player_shirt_number:'8',player_name:'Jäntti Teemu'},match:{},createdAt:Date.now()},
+  {event:{_kind:'goal',time:'16:58',score_A:2,score_B:2,player_shirt_number:'11',player_name:'Myllykangas Tuomo',player_2_name:'Haapaniemi Sauli',shirt_2_number:'44'},match:{live_A:2,live_B:2},createdAt:Date.now()}
+ ];activeEvents.push(...demo);$('events').innerHTML=activeEvents.map(x=>eventMarkup(x.event,x.match)).join('');
+}else{update();setInterval(update,refresh*1000);setInterval(tickClock,250);}
 </script></body></html>
