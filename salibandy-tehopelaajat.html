@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Salibandy · Ottelun tehopelaajat</title>
+<style>
+:root{--ink:#101820;--panel:#1b2a35;--accent:#e8c547;--white:#fff;--muted:#bdc7d0;--scale:1;--gfx-width:575px}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;background:transparent;overflow:hidden}
+body{font-family:Arial,Helvetica,sans-serif;color:var(--white);font-variant-numeric:tabular-nums}
+.gfx{opacity:1;transition:opacity .25s ease;filter:drop-shadow(0 3px 7px rgba(0,0,0,.3))}
+body.gfx-hidden .gfx{opacity:0;pointer-events:none}
+.hidden{display:none!important}
+.err{position:fixed;left:6px;bottom:6px;max-width:calc(100vw - 12px);padding:7px 10px;background:rgba(16,24,32,.97);border-left:3px solid var(--accent);font-size:12px;color:#fff}
+.stage{width:var(--gfx-width);max-width:calc(100vw - 8px);transform:scale(var(--scale));transform-origin:top left}
+.top{height:38px;display:grid;grid-template-columns:minmax(0,1fr) 91px minmax(0,1fr);background:var(--ink);border-bottom:2px solid var(--accent);overflow:hidden}
+.team{min-width:0;display:flex;align-items:center;gap:6px;padding:4px 8px;background:#141d25}
+.team.b{justify-content:flex-end;text-align:right}
+.logo,.fallback{width:25px;height:25px;flex:0 0 25px;object-fit:contain;display:block}
+.fallback{border:1.5px solid var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--ink);color:var(--accent);font-weight:900;font-size:10px}
+.team-name{font-size:12px;font-weight:900;text-transform:uppercase;line-height:1.05;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.title{display:flex;align-items:center;justify-content:center;text-align:center;background:var(--accent);color:var(--ink);font-size:10px;line-height:1.05;font-weight:900;letter-spacing:.045em;padding:4px;text-transform:uppercase}
+.lists{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);background:rgba(16,24,32,.97);border-left:1px solid #34434d;border-right:1px solid #34434d}
+.side{min-width:0;overflow:hidden}
+.side:first-child{border-right:1px solid #47545c}
+.columns{height:21px;display:grid;grid-template-columns:27px minmax(0,1fr) 68px;align-items:center;gap:0;padding:0 7px;color:#c5cfd6;background:#23323c;border-bottom:1px solid #46535d;font-size:9px;line-height:1;font-weight:900;text-transform:uppercase;letter-spacing:.025em}
+.columns .stats-label{text-align:right;white-space:nowrap}
+.player{height:27px;display:grid;grid-template-columns:27px minmax(0,1fr) 68px;align-items:center;gap:0;padding:0 7px;background:#141e26;border-bottom:1px solid #293741;font-size:11px;line-height:1.05}
+.player:nth-child(odd){background:#192630}
+.number{color:#bdc7d0;font-weight:800;font-size:10px;white-space:nowrap}
+.name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:800;padding-right:4px}
+.points{display:flex;justify-content:flex-end;align-items:center;gap:2px;white-space:nowrap;color:#fff;font-size:10px;font-weight:900}
+.points .total{color:var(--accent);font-size:12px;min-width:8px;text-align:right}
+.empty{height:29px;padding:8px 7px;color:#bdc7d0;font-size:10px;font-style:italic;background:#141e26}
+.foot{height:3px;background:var(--accent)}
+@media(max-width:480px){.top{grid-template-columns:minmax(0,1fr) 75px minmax(0,1fr);height:34px}.team{gap:4px;padding:3px 5px}.logo,.fallback{width:21px;height:21px;flex-basis:21px}.team-name{font-size:10px}.title{font-size:9px}.columns,.player{grid-template-columns:22px minmax(0,1fr) 60px;padding-left:5px;padding-right:5px}.columns{font-size:8px}.player{height:25px;font-size:10px}.number{font-size:9px}.points{font-size:9px}.points .total{font-size:11px}}
+</style>
+</head>
+<body>
+<div class="gfx stage" id="stage">
+  <div class="top">
+    <div class="team a"><div id="logoA" class="fallback">A</div><div id="teamAName" class="team-name">KOTI</div></div>
+    <div class="title">OTTELUN<br>TEHOPISTEET</div>
+    <div class="team b"><div id="teamBName" class="team-name">VIERAS</div><div id="logoB" class="fallback">B</div></div>
+  </div>
+  <div class="lists">
+    <section class="side" aria-label="Kotijoukkueen tehopelaajat">
+      <div class="columns"><span>#</span><span>PELAAJA</span><span class="stats-label">M + S = P</span></div>
+      <div id="playersA"></div>
+    </section>
+    <section class="side" aria-label="Vierasjoukkueen tehopelaajat">
+      <div class="columns"><span>#</span><span>PELAAJA</span><span class="stats-label">M + S = P</span></div>
+      <div id="playersB"></div>
+    </section>
+  </div>
+  <div class="foot"></div>
+</div>
+<div id="error" class="err hidden"></div>
+<script>
+const q=new URLSearchParams(location.search);
+let matchId=q.get('match_id')||q.get('ottelu')||q.get('match')||'';
+let defaultMatchPromise=null;
+async function ensureMatchId(){if(matchId)return matchId;if(!defaultMatchPromise)defaultMatchPromise=fetch('/api/salibandy-default-match',{cache:'no-store'}).then(r=>r.json()).then(d=>{matchId=String(d.match_id||'953141');return matchId}).catch(()=>{matchId='953141';return matchId});return defaultMatchPromise}
+const refresh=Math.max(3,Math.min(60,Number(q.get('refresh')||3)));
+const scale=Math.max(.5,Math.min(2.5,Number(q.get('scale')||1)));
+const width=Math.max(420,Math.min(1200,Number(q.get('width')||575)));
+document.documentElement.style.setProperty('--scale',scale);
+document.documentElement.style.setProperty('--gfx-width',width+'px');
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function setText(id,v){const e=$(id);if(e)e.textContent=v??''}
+function setLogo(id,url,name){const e=$(id);if(!e)return;e.replaceChildren();if(url&&/^https?:\/\//i.test(url)){const im=document.createElement('img');im.className='logo';im.src=url;im.alt='';im.onerror=()=>fallback();e.className='';e.appendChild(im);function fallback(){e.className='fallback';e.textContent=(name||'?').slice(0,2).toUpperCase()}}else{e.className='fallback';e.textContent=(name||'?').slice(0,2).toUpperCase()}}
+function teamFields(m){return {a:{id:String(m.team_A_id||''),name:m.team_A_name||m.club_A_name||'KOTI',logo:m.club_A_crest||m.team_A_crest||''},b:{id:String(m.team_B_id||''),name:m.team_B_name||m.club_B_name||'VIERAS',logo:m.club_B_crest||m.team_B_crest||''}}}
+function positive(n){const v=Number(n);return Number.isFinite(v)&&v>0?v:0}
+function playerPoints(p){const goals=positive(p.goals),assists=positive(p.assists);const sum=goals+assists;const raw=Number(p.points);return {goals,assists,points:Number.isFinite(raw)&&raw>=0?raw:sum}}
+function extractScorers(m,teamId){const lineups=Array.isArray(m.lineups)?m.lineups:[];return lineups.filter(p=>String(p.team_id||'')===String(teamId)).map(p=>{const s=playerPoints(p);return {...p,_goals:s.goals,_assists:s.assists,_points:s.points}}).filter(p=>p._points>0||p._goals+p._assists>0).sort((a,b)=>b._points-a._points||b._goals-a._goals||b._assists-a._assists||String(a.player_name||'').localeCompare(String(b.player_name||''),'fi'))}
+function renderSide(id,players){const el=$(id);if(!players.length){el.innerHTML='<div class="empty">Ei tehopisteitä vielä</div>';return}el.innerHTML=players.map(p=>{const number=String(p.shirt_number??p.player_shirt_number??'').trim();const name=p.player_name||[p.first_name,p.last_name].filter(Boolean).join(' ')||'Tuntematon pelaaja';return '<div class="player"><span class="number">'+(number?'#'+esc(number):'—')+'</span><span class="name" title="'+esc(name)+'">'+esc(name)+'</span><span class="points"><span>'+p._goals+'</span><span>+</span><span>'+p._assists+'</span><span>=</span><span class="total">'+p._points+'</span></span></div>'}).join('')}
+function render(m){const t=teamFields(m);setLogo('logoA',t.a.logo,t.a.name);setLogo('logoB',t.b.logo,t.b.name);setText('teamAName',t.a.name);setText('teamBName',t.b.name);renderSide('playersA',extractScorers(m,t.a.id));renderSide('playersB',extractScorers(m,t.b.id));$('error').classList.add('hidden')}
+async function getMatch(){await ensureMatchId();const u=new URL('/api/salibandy-match',location.origin);u.searchParams.set('match_id',matchId);u.searchParams.set('timeStamp',Date.now());const r=await fetch(u,{cache:'no-store'});const d=await r.json();if(!r.ok)throw Error(d?.error||('API vastasi '+r.status));if(d.call?.status&&d.call.status!=='ok')throw Error('TorneoPal: '+d.call.status);if(!d.match)throw Error('Ottelutietoja ei löytynyt.');return d.match}
+function showError(err){const e=$('error');e.textContent='Salibandy: '+(err?.message||err);e.classList.remove('hidden')}
+async function update(){try{render(await getMatch())}catch(e){showError(e)}}
+async function updateVisibility(key){try{const r=await fetch('/api/salibandy-graphics-state',{cache:'no-store'});if(!r.ok)return;const d=await r.json();document.body.classList.toggle('gfx-hidden',d[key]!==true)}catch(e){/* retain local state if remote control is offline */}}
+function startVisibility(){if(q.get('remote')!=='1'){document.body.classList.remove('gfx-hidden');return}document.body.classList.add('gfx-hidden');updateVisibility('scorers');setInterval(()=>updateVisibility('scorers'),2000)}
+function preview(){const lineups=[];const add=(team_id,arr)=>arr.forEach(([shirt_number,player_name,goals,assists])=>lineups.push({team_id,shirt_number,player_name,goals,assists,points:goals+assists}));
+add('1',[[29,'Honkanen Pete',3,0],[44,'Piik Tuukka',1,2],[97,'Kosonen Kuutti',0,3],[26,'Huhta Onni',1,0],[96,'Juvonen Elmo',1,0],[13,'Pylkkönen Veeti',0,1]]);
+add('2',[[97,'Pietilä Joona',5,0],[87,'Könönen Vili',1,2],[9,'Kääriäinen Aarni',2,0],[40,'Moilanen Valtteri',1,1],[16,'Palokangas Aapo',0,1],[66,'Hallikainen Hugo',0,1],[78,'Korkeamäki Arttu',0,1],[92,'Lehtinen Olli',0,1],[93,'Pohjola Jerry',0,1],[98,'Heikkinen Artturi',0,1]]);
+render({team_A_id:'1',team_A_name:'LeBaJOSBA',club_A_name:'LeBaJOSBA',club_A_crest:'',team_B_id:'2',team_B_name:'OFBC',club_B_name:'OFBC',club_B_crest:'',lineups});}
+startVisibility();
+if(q.get('preview')==='1'){preview()}else{update();setInterval(update,refresh*1000)}
+</script>
+</body></html>

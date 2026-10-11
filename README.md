@@ -12,6 +12,7 @@ Tämä on **täysin erillinen GitHub/Vercel-projekti** salibandyn lähetysgrafii
 - `api/salibandy-standings.js` – ottelun sarjan ja lohkon sarjataulukon haku TorneoPalista
 - `salibandy-kokoonpanot.html` – joukkueiden kokoonpanot
 - `salibandy-otteluntapahtumat.html` – kaikki maalit, rangaistukset ja aikalisät aikajärjestyksessä
+- `salibandy-tehopelaajat.html` – kompakti grafiikka molempien joukkueiden tehopisteitä tehneistä pelaajista
 - `salibandy-grafiikkaohjaus.html` – grafiikoiden ohjauspaneeli
 - `api/salibandy-match.js` – ottelutiedot Salibandyliiton TorneoPal-rajapinnasta
 - `api/salibandy-graphics-state.js` – etäohjauksen näkyvyystila
@@ -125,3 +126,17 @@ Tulostaulun tapahtumagrafiikka rikastaa maalit `match.events`-listan tiedoilla: 
 - `?refresh=3` – päivitysväli sekunteina
 - `?preview=1` – esimerkkitapahtumat ilman API-yhteyttä
 - `?remote=1` – ottaa sivun mukaan etäohjauksen näkyvyystilaan
+
+
+## Ottelun tehopelaajat
+
+`salibandy-tehopelaajat.html` näyttää rinnakkain molempien joukkueiden pelaajat, joilla on vähintään yksi tehopiste. Pelaajat lajitellaan pisteiden, maalien ja syöttöjen mukaan. Rivillä näkyvät maalit + syötöt = pisteet (esim. `3 + 0 = 3`). Tiedot luetaan otteluvastauksen `lineups`-listan `goals`, `assists` ja `points` -kentistä.
+
+- `?match_id=OTTELUN_ID` – valitsee ottelun
+- `?width=575` – grafiikan leveys pikseleinä, oletus 575
+- `?scale=1` – skaalaus
+- `?refresh=3` – päivitysväli sekunteina
+- `?preview=1` – esimerkkitaulukko ilman API-yhteyttä
+- `?remote=1` – ottaa näkyvyyden grafiikkaohjauksen alle
+
+Suositeltu OBS-selainlähteen koko on noin 575 × 360 pikseliä; aseta lähde tulostaulun alapuolelle. Voit ohjauspaneelissa valita **Näytä tulostaulu + tehopelaajat**, jolloin tulostaulu jää näkyviin ja tehopelaajalista tulee sen alle.
