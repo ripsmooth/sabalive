@@ -28,11 +28,11 @@ body.gfx-hidden .gfx{opacity:0;pointer-events:none}
 </style></head><body><div class="gfx stage">
 <div class="header"><div class="team a"><div id="logoA" class="fallback">A</div><div id="teamAName" class="teamname">KOTI</div></div><div class="heading">TILASTOT</div><div class="team b"><div id="logoB" class="fallback">B</div><div id="teamBName" class="teamname">VIERAS</div></div></div>
 <div class="rows">
-<div class="row"><div class="value a" id="shotsA">—</div><div class="label">Laukaukset<br>(tilastoidut)</div><div class="value b" id="shotsB">—</div></div>
-<div class="row"><div class="value a" id="savesA">—</div><div class="label">Maalivahdin torjunnat</div><div class="value b" id="savesB">—</div></div>
-<div class="row"><div class="value a" id="penaltyMinutesA">0 min</div><div class="label">Jäähyminuutit</div><div class="value b" id="penaltyMinutesB">0 min</div></div>
-<div class="row"><div class="value a" id="penaltiesA">0</div><div class="label">Jäähyt</div><div class="value b" id="penaltiesB">0</div></div>
-<div class="row hidden" id="ejectionsRow"><div class="value a" id="ejectionsA">0</div><div class="label">Ulosajot</div><div class="value b" id="ejectionsB">0</div></div>
+<div class="row"><div class="value a" id="goalsA">0</div><div class="label">Maalit</div><div class="value b" id="goalsB">0</div></div>
+<div class="row"><div class="value a" id="powerplayA">0</div><div class="label">Ylivoimamaalit</div><div class="value b" id="powerplayB">0</div></div>
+<div class="row"><div class="value a" id="shorthandedA">0</div><div class="label">Alivoimamaalit</div><div class="value b" id="shorthandedB">0</div></div>
+<div class="row"><div class="value a" id="savesA">0</div><div class="label">Maalivahdin torjunnat</div><div class="value b" id="savesB">0</div></div>
+<div class="row"><div class="value a" id="penaltiesA">0</div><div class="label">Rangaistukset</div><div class="value b" id="penaltiesB">0</div></div>
 </div></div><div id="error" class="err hidden"></div>
 <script>
 const q=new URLSearchParams(location.search);
@@ -55,7 +55,18 @@ function startVisibility(key,defaultVisible){const remote=new URLSearchParams(lo
 function showError(err){const e=$('error');if(e){e.textContent='Salibandy: '+(err?.message||err);e.classList.remove('hidden')}}
 function clearError(){const e=$('error');if(e)e.classList.add('hidden')}
 
-function calcStats(m){const teams=teamFields(m),players=Array.isArray(m.lineups)?m.lineups:[],bookings=Array.isArray(m.bookings)?m.bookings:[];const out={A:{shots:0,saves:0,minutes:0,count:0,ejections:0},B:{shots:0,saves:0,minutes:0,count:0,ejections:0}};for(const p of players){const side=String(p.team_id)===teams.a.id?'A':String(p.team_id)===teams.b.id?'B':'';if(side){out[side].shots+=Number(p.shots)||0;out[side].saves+=Number(p.saves)||0}}for(const b of bookings){const code=String(b.code||'').toLowerCase(),fi=String(b.code_fi||'').toLowerCase(),team=String(b.team_id||''),side=team===teams.a.id?'A':team===teams.b.id?'B':'';if(!side)continue;const isPenalty=/^\d+\s*min$/.test(code)||/^\d+\s*min/.test(fi);if(isPenalty){const mins=Number((code.match(/(\d+)/)||fi.match(/(\d+)/)||[])[1])||0;out[side].minutes+=mins;out[side].count++}if(/ulosajo|disqual|red.?card|game.?misconduct|match.?penalty/i.test(code+' '+fi))out[side].ejections++}return out}
-async function update(){try{const m=await getMatch(),t=teamFields(m),st=calcStats(m);setLogo('logoA',t.a.logo,t.a.name);setLogo('logoB',t.b.logo,t.b.name);setText('teamAName',t.a.name);setText('teamBName',t.b.name);for(const side of ['A','B']){const x=st[side];setText('shots'+side,x.shots);setText('saves'+side,x.saves);setText('penaltyMinutes'+side,x.minutes+' min');setText('penalties'+side,x.count);setText('ejections'+side,x.ejections)}$('ejectionsRow').classList.toggle('hidden',st.A.ejections+st.B.ejections===0);clearError()}catch(e){showError(e)}}
+function calcStats(m){
+ const teams=teamFields(m),players=Array.isArray(m.lineups)?m.lineups:[],bookings=Array.isArray(m.bookings)?m.bookings:[],goals=Array.isArray(m.goals)?m.goals:[];
+ const out={A:{goals:0,powerplay:0,shorthanded:0,saves:0,penalties:0},B:{goals:0,powerplay:0,shorthanded:0,saves:0,penalties:0}};
+ const sideFor=id=>String(id)===teams.a.id?'A':String(id)===teams.b.id?'B':'';
+ for(const g of goals){const side=sideFor(g.team_id);if(side)out[side].goals++;}
+ for(const p of players){const side=sideFor(p.team_id);if(side)out[side].saves+=Number(p.saves)||0;}
+ for(const b of bookings){const side=sideFor(b.team_id);if(!side)continue;const code=String(b.code||'').toLowerCase(),fi=String(b.code_fi||'').toLowerCase();if(/^\d+\s*min/.test(code)||/^\d+\s*min/.test(fi))out[side].penalties++;}
+ // TorneoPalin tämän otteludatan maalitapahtumissa ei välttämättä ole ylivoima-/alivoimatietoa.
+ // Näytetään nolla vain silloin, kun tapahtumissa ei ole luotettavaa tilatietoa; ulkoasua ei muuteta.
+ for(const g of goals){const side=sideFor(g.team_id);if(!side)continue;const desc=String([g.description,g.description_text,g.code,g.code_fi,g.code_en].filter(Boolean).join(' ')).toLowerCase();if(/ylivoima|power.?play|man.?advantage/.test(desc))out[side].powerplay++;if(/alivoima|short.?handed|man.?down/.test(desc))out[side].shorthanded++;}
+ return out;
+}
+async function update(){try{const m=await getMatch(),t=teamFields(m),st=calcStats(m);setLogo('logoA',t.a.logo,t.a.name);setLogo('logoB',t.b.logo,t.b.name);setText('teamAName',t.a.name);setText('teamBName',t.b.name);for(const side of ['A','B']){const x=st[side];setText('goals'+side,x.goals);setText('powerplay'+side,x.powerplay);setText('shorthanded'+side,x.shorthanded);setText('saves'+side,x.saves);setText('penalties'+side,x.penalties)}clearError()}catch(e){showError(e)}}
 startVisibility('stats',false);update();setInterval(update,refresh*1000);
 </script></body></html>
