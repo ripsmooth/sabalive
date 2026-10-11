@@ -1,0 +1,46 @@
+<!doctype html><html lang="fi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Salibandy · Grafiikkaohjaus</title>
+<style>
+:root{--bg:#101820;--panel:#16232d;--accent:#e8c547;--line:#30414d;--muted:#bdc7d0;--white:#fff}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#14212b,#0c1319);font-family:Arial,Helvetica,sans-serif;color:var(--white);padding:22px}
+main{max-width:1120px;margin:0 auto;display:grid;gap:18px}.card{background:rgba(16,24,32,.96);border:1px solid var(--line);border-radius:16px;padding:24px;box-shadow:0 10px 24px #0002}
+h1{font-size:26px;margin:0 0 7px}h2{font-size:21px;margin:0 0 16px}p{color:var(--muted);line-height:1.5}label{display:block;font-weight:800;margin:12px 0 6px}input{width:100%;background:#0b1217;border:1px solid #4a5b65;border-radius:8px;color:#fff;padding:12px;font-size:16px}
+.fields{display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px}.line{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:14px 0;border-bottom:1px solid var(--line)}.line:last-child{border-bottom:0}.name{font-size:18px;font-weight:900}.state{font-size:12px;color:var(--muted);margin-top:5px;text-transform:uppercase;letter-spacing:.05em}
+button{border:0;border-radius:9px;padding:12px 16px;font-size:15px;font-weight:900;background:var(--accent);color:#101820;cursor:pointer}button.alt{background:#30434f;color:#fff}button.red{background:#b83b37;color:#fff}button.small{padding:9px 12px;font-size:13px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.rightactions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.quick{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}.msg{min-height:20px;color:var(--muted);font-size:13px;margin-top:12px}.note{font-size:13px;margin-bottom:0}code{background:#0b1217;padding:2px 5px;border-radius:4px;color:var(--accent)}
+@media(max-width:650px){body{padding:10px}.card{padding:16px}.fields{grid-template-columns:1fr}.line{grid-template-columns:1fr}.rightactions{justify-content:flex-start}}
+</style></head><body><main>
+<section class="card"><h1>Salibandy · Grafiikkaohjaus</h1><p>Saman tumman ja keltaisen lähetysgrafiikkatyylin salibandy-versiot. Ohjaa näkyvyyttä verkon yli ja avaa selaimessa tarkistusnäkymä.</p>
+<div class="fields"><div><label for="matchId">Ottelun ID</label><input id="matchId" value="953141" inputmode="numeric"></div><div><label for="scale">Skaalaus</label><input id="scale" value="1" type="number" min=".5" max="2.5" step=".05"></div><div><label for="refresh">Päivitys (s)</label><input id="refresh" value="3" type="number" min="3" max="60"></div></div>
+<label for="password">Ohjaussalasana</label><input id="password" type="password" autocomplete="current-password" placeholder="Sama GRAPHICS_CONTROL_PASSWORD kuin nykyisessä ohjauspaneelissa">
+<div class="msg" id="message">Yhdistetään ohjaustilaan…</div></section>
+<section class="card"><h2>Näkyvyys</h2>
+<div class="line"><div><div class="name">Tulostaulu</div><div class="state" id="state-scorebug">Tilaa haetaan…</div></div><div class="rightactions"><button id="toggle-scorebug" class="small">Näytä/piilota</button></div></div>
+<div class="line"><div><div class="name">Lower Third</div><div class="state" id="state-lowerthird">Tilaa haetaan…</div></div><div class="rightactions"><button id="toggle-lowerthird" class="small">Näytä/piilota</button></div></div>
+<div class="line"><div><div class="name">Tilastot</div><div class="state" id="state-stats">Tilaa haetaan…</div></div><div class="rightactions"><button id="toggle-stats" class="small">Näytä/piilota</button></div></div>
+<div class="line"><div><div class="name">Kokoonpanot</div><div class="state" id="state-lineups">Tilaa haetaan…</div></div><div class="rightactions"><button id="toggle-lineups" class="small">Näytä/piilota</button></div></div>
+<div class="quick"><button id="show-scorebug">Näytä tulostaulu</button><button id="show-lowerthird" class="alt">Näytä Lower Third</button><button id="show-stats" class="alt">Näytä tilastot</button><button id="show-lineups" class="alt">Näytä kokoonpanot</button><button id="hide-all" class="red">Piilota kaikki</button></div></section>
+<section class="card"><h2>Grafiikkojen osoitteet</h2><p>Valitse ottelu ID yläpuolelta. Kopioi osoite OBS:n selainlähteeseen tai avaa esikatselu.</p>
+<div class="line"><div><div class="name">Tulostaulu</div><input id="url-scorebug" readonly></div><div class="rightactions"><button class="small" data-open="scorebug">Avaa</button><button class="small alt" data-copy="scorebug">Kopioi</button></div></div>
+<div class="line"><div><div class="name">Lower Third</div><input id="url-lowerthird" readonly></div><div class="rightactions"><button class="small" data-open="lowerthird">Avaa</button><button class="small alt" data-copy="lowerthird">Kopioi</button></div></div>
+<div class="line"><div><div class="name">Tilastot</div><input id="url-stats" readonly></div><div class="rightactions"><button class="small" data-open="stats">Avaa</button><button class="small alt" data-copy="stats">Kopioi</button></div></div>
+<div class="line"><div><div class="name">Kokoonpanot</div><input id="url-lineups" readonly></div><div class="rightactions"><button class="small" data-open="lineups">Avaa</button><button class="small alt" data-copy="lineups">Kopioi</button></div></div>
+<p class="note">Julkaisun jälkeen osoitteet ovat tämän sivuston juuressa: <code>/salibandy-tulostaulu.html</code>, <code>/salibandy-lowerthird.html</code>, <code>/salibandy-tilastot.html</code> ja <code>/salibandy-kokoonpanot.html</code>.</p></section>
+<section class="card"><h2>Yhteensopivuus</h2><p class="note">Tämä lisäosa käyttää nykyisiä Vercelin ympäristömuuttujia <code>UPSTASH_REDIS_REST_URL</code>, <code>UPSTASH_REDIS_REST_TOKEN</code> ja <code>GRAPHICS_CONTROL_PASSWORD</code>, mutta tallentaa Salibandyn näkyvyystilan omaan Redis-avaimeen. Näin jääpallon aiempi näkyvyys ei muutu.</p></section>
+</main>
+<script>
+const ids=['scorebug','lowerthird','stats','lineups'];let state={scorebug:true,lowerthird:false,stats:false,lineups:false};let poll;
+const $=id=>document.getElementById(id);
+function urlFor(key){const path={scorebug:'salibandy-tulostaulu.html',lowerthird:'salibandy-lowerthird.html',stats:'salibandy-tilastot.html',lineups:'salibandy-kokoonpanot.html'}[key];const u=new URL(path,location.href);u.searchParams.set('match_id',String($('matchId').value||'953141').trim());u.searchParams.set('scale',$('scale').value||'1');u.searchParams.set('refresh',$('refresh').value||'3');return u.href}
+function urls(){for(const id of ids)$('url-'+id).value=urlFor(id)}
+function render(){for(const id of ids){$('state-'+id).textContent=state[id]?'NÄKYVISSÄ':'PIILOSSA';$('toggle-'+id).textContent=state[id]?'PIILOTA':'NÄYTÄ'}}
+async function load(){try{const r=await fetch('/api/salibandy-graphics-state',{cache:'no-store'});if(r.ok){state={...state,...await r.json()};render();$('message').textContent='Ohjaus yhdistetty.'}else $('message').textContent='Ohjaustila ei ole käytettävissä ('+r.status+'). Tarkista Vercelin Redis-asetukset.'}catch(e){$('message').textContent='Yhteys ohjaustilaan epäonnistui.'}}
+async function save(next){const pw=$('password').value;if(!pw){$('message').textContent='Syötä ohjaussalasana ennen muutosta.';$('password').focus();return}try{const r=await fetch('/api/salibandy-graphics-state',{method:'POST',headers:{'Content-Type':'application/json','X-Control-Password':pw},body:JSON.stringify(next)});const d=await r.json();if(!r.ok)throw Error(d.error||'Tallennus epäonnistui');state={...state,...d};render();$('message').textContent='Tallennettu '+new Date().toLocaleTimeString('fi-FI')}catch(e){$('message').textContent=e.message}}
+for(const id of ids){$('toggle-'+id).onclick=()=>save({[id]:!state[id]})}
+$('show-scorebug').onclick=()=>save({scorebug:true,lowerthird:false,stats:false,lineups:false});
+$('show-lowerthird').onclick=()=>save({scorebug:false,lowerthird:true,stats:false,lineups:false});
+$('show-stats').onclick=()=>save({scorebug:false,lowerthird:false,stats:true,lineups:false});
+$('show-lineups').onclick=()=>save({scorebug:false,lowerthird:false,stats:false,lineups:true});
+$('hide-all').onclick=()=>save({scorebug:false,lowerthird:false,stats:false,lineups:false});
+document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>window.open(urlFor(b.dataset.open),'_blank','noopener'));
+document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=async()=>{const u=urlFor(b.dataset.copy);try{await navigator.clipboard.writeText(u);$('message').textContent='Osoite kopioitu.'}catch{$('url-'+b.dataset.copy).value=u;$('url-'+b.dataset.copy).select();$('message').textContent='Valitse osoite ja kopioi se käsin.'}});
+['matchId','scale','refresh'].forEach(id=>$(id).addEventListener('input',urls));urls();render();load();setInterval(load,2000);
+</script></body></html>

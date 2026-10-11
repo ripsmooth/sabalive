@@ -1,0 +1,61 @@
+<!doctype html><html lang="fi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Salibandy · Tilastot</title><style>
+
+:root{--ink:#101820;--panel:#1b2a35;--accent:#e8c547;--white:#fff;--muted:#bdc7d0;--scale:1;--gfx-width:1400px}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;background:transparent;overflow:hidden}
+body{font-family:Arial,Helvetica,sans-serif;color:var(--white);font-variant-numeric:tabular-nums}
+.gfx{opacity:1;transition:opacity .45s ease-in-out;will-change:opacity;filter:drop-shadow(0 4px 8px rgba(0,0,0,.3))}
+body.gfx-hidden .gfx{opacity:0;pointer-events:none}
+.hidden{display:none!important}
+.err{position:fixed;left:8px;bottom:8px;background:rgba(16,24,32,.96);border-left:4px solid var(--accent);padding:10px 14px;color:#fff;font-size:14px;max-width:calc(100vw - 16px)}
+.logo{object-fit:contain;display:block}
+.fallback{display:flex;align-items:center;justify-content:center;border:2px solid var(--accent);border-radius:50%;color:var(--accent);font-weight:900;background:var(--ink);flex:0 0 auto}
+
+.stage{position:absolute;left:8px;bottom:50px;width:var(--gfx-width);max-width:calc(100vw - 16px);transform:scale(var(--scale));transform-origin:bottom left}
+.header{height:145px;display:grid;grid-template-columns:minmax(0,1fr) 280px minmax(0,1fr);align-items:stretch;background:var(--accent)}
+.team{min-width:0;background:rgba(16,24,32,.97);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;padding:12px 22px}
+.team.a{clip-path:polygon(0 0,100% 0,calc(100% - 18px) 100%,0 100%)}
+.team.b{clip-path:polygon(18px 0,100% 0,100% 100%,0 100%)}
+.logo{width:70px;height:70px}.fallback{width:70px;height:70px;font-size:22px}
+.teamname{font-size:clamp(18px,1.8vw,29px);font-weight:900;text-transform:uppercase;text-align:center;line-height:1.05}
+.heading{display:flex;align-items:center;justify-content:center;text-align:center;padding:10px;color:var(--ink);font-size:31px;font-weight:900;letter-spacing:.07em;text-transform:uppercase}
+.rows{background:rgba(16,24,32,.98);border-top:4px solid var(--accent);padding:8px 0}
+.row{display:grid;grid-template-columns:minmax(0,1fr) 350px minmax(0,1fr);min-height:58px;align-items:stretch;border-bottom:1px solid #34434d}
+.row:last-child{border:0}.value{font-size:29px;font-weight:900;padding:6px 30px;display:flex;align-items:center;color:#fff}
+.value.a{justify-content:flex-start}.value.b{justify-content:flex-end}
+.label{background:#1b2a35;border-left:2px solid var(--accent);border-right:2px solid var(--accent);display:flex;align-items:center;justify-content:center;text-align:center;padding:7px 12px;font-size:16px;font-weight:900;line-height:1.15;letter-spacing:.025em;text-transform:uppercase}
+@media(max-width:750px){.header{height:105px;grid-template-columns:1fr 125px 1fr}.logo,.fallback{width:48px;height:48px}.teamname{font-size:14px}.heading{font-size:18px}.row{grid-template-columns:minmax(0,1fr) 150px minmax(0,1fr);min-height:45px}.value{font-size:20px;padding:5px 10px}.label{font-size:11px;padding:5px}}
+</style></head><body class="gfx-hidden"><div class="gfx stage">
+<div class="header"><div class="team a"><div id="logoA" class="fallback">A</div><div id="teamAName" class="teamname">KOTI</div></div><div class="heading">TILASTOT</div><div class="team b"><div id="logoB" class="fallback">B</div><div id="teamBName" class="teamname">VIERAS</div></div></div>
+<div class="rows">
+<div class="row"><div class="value a" id="shotsA">—</div><div class="label">Laukaukset<br>(tilastoidut)</div><div class="value b" id="shotsB">—</div></div>
+<div class="row"><div class="value a" id="savesA">—</div><div class="label">Maalivahdin torjunnat</div><div class="value b" id="savesB">—</div></div>
+<div class="row"><div class="value a" id="penaltyMinutesA">0 min</div><div class="label">Jäähyminuutit</div><div class="value b" id="penaltyMinutesB">0 min</div></div>
+<div class="row"><div class="value a" id="penaltiesA">0</div><div class="label">Jäähyt</div><div class="value b" id="penaltiesB">0</div></div>
+<div class="row hidden" id="ejectionsRow"><div class="value a" id="ejectionsA">0</div><div class="label">Ulosajot</div><div class="value b" id="ejectionsB">0</div></div>
+</div></div><div id="error" class="err hidden"></div>
+<script>
+const q=new URLSearchParams(location.search);
+const matchId=q.get('match_id')||q.get('ottelu')||'953141';
+const refresh=Math.max(3,Math.min(60,Number(q.get('refresh')||3)));
+const scale=Math.max(.5,Math.min(2.5,Number(q.get('scale')||1)));
+const width=Math.max(500,Math.min(1920,Number(q.get('width')||1400)));
+document.documentElement.style.setProperty('--scale',scale);
+document.documentElement.style.setProperty('--gfx-width',width+'px');
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function getMatch(){const u=new URL('/api/salibandy-match',location.origin);u.searchParams.set('match_id',matchId);u.searchParams.set('timeStamp',Date.now());return fetch(u,{cache:'no-store'}).then(async r=>{const d=await r.json();if(!r.ok)throw Error(d?.error||('API vastasi '+r.status));if(d.call?.status&&d.call.status!=='ok')throw Error('TorneoPal: '+d.call.status);if(!d.match)throw Error('Ottelutietoja ei löytynyt.');return d.match})}
+function setText(id,value){const e=$(id);if(e)e.textContent=value??''}
+function setLogo(id,url,name){const e=$(id);if(!e)return;e.innerHTML='';if(url&&/^https?:\/\//i.test(url)){const im=document.createElement('img');im.className='logo';im.src=url;im.alt='';im.onerror=()=>fallback();e.className='';e.appendChild(im);function fallback(){e.className='fallback';e.textContent=(name||'?').slice(0,2).toUpperCase()}}else{e.className='fallback';e.textContent=(name||'?').slice(0,2).toUpperCase()}}
+function teamFields(m){return {a:{id:String(m.team_A_id||''),name:m.team_A_name||m.club_A_name||'KOTI',logo:m.club_A_crest||m.team_A_crest||''},b:{id:String(m.team_B_id||''),name:m.team_B_name||m.club_B_name||'VIERAS',logo:m.club_B_crest||m.team_B_crest||''}}}
+function getScore(m){return {a:m.live_A??m.fs_A??'0',b:m.live_B??m.fs_B??'0'}}
+function matchClock(m){const status=String(m.status||'').toLowerCase();if(['played','finished','over'].includes(status))return 'LOPPUTULOS';if(m.live_time_mmss)return String(m.live_time_mmss);if(m.live_time)return String(m.live_time);return m.time?String(m.time).slice(0,5):''}
+async function updateVisibility(key,defaultVisible){try{const r=await fetch('/api/salibandy-graphics-state',{cache:'no-store'});if(!r.ok)return;const d=await r.json();document.body.classList.toggle('gfx-hidden',d[key]!==true)}catch(e){/* retain default visibility if remote control is unreachable */}}
+function startVisibility(key,defaultVisible){if(!defaultVisible)document.body.classList.add('gfx-hidden');updateVisibility(key,defaultVisible);setInterval(()=>updateVisibility(key,defaultVisible),2000)}
+function showError(err){const e=$('error');if(e){e.textContent='Salibandy: '+(err?.message||err);e.classList.remove('hidden')}}
+function clearError(){const e=$('error');if(e)e.classList.add('hidden')}
+
+function calcStats(m){const teams=teamFields(m),players=Array.isArray(m.lineups)?m.lineups:[],bookings=Array.isArray(m.bookings)?m.bookings:[];const out={A:{shots:0,saves:0,minutes:0,count:0,ejections:0},B:{shots:0,saves:0,minutes:0,count:0,ejections:0}};for(const p of players){const side=String(p.team_id)===teams.a.id?'A':String(p.team_id)===teams.b.id?'B':'';if(side){out[side].shots+=Number(p.shots)||0;out[side].saves+=Number(p.saves)||0}}for(const b of bookings){const code=String(b.code||'').toLowerCase(),fi=String(b.code_fi||'').toLowerCase(),team=String(b.team_id||''),side=team===teams.a.id?'A':team===teams.b.id?'B':'';if(!side)continue;const isPenalty=/^\d+\s*min$/.test(code)||/^\d+\s*min/.test(fi);if(isPenalty){const mins=Number((code.match(/(\d+)/)||fi.match(/(\d+)/)||[])[1])||0;out[side].minutes+=mins;out[side].count++}if(/ulosajo|disqual|red.?card|game.?misconduct|match.?penalty/i.test(code+' '+fi))out[side].ejections++}return out}
+async function update(){try{const m=await getMatch(),t=teamFields(m),st=calcStats(m);setLogo('logoA',t.a.logo,t.a.name);setLogo('logoB',t.b.logo,t.b.name);setText('teamAName',t.a.name);setText('teamBName',t.b.name);for(const side of ['A','B']){const x=st[side];setText('shots'+side,x.shots);setText('saves'+side,x.saves);setText('penaltyMinutes'+side,x.minutes+' min');setText('penalties'+side,x.count);setText('ejections'+side,x.ejections)}$('ejectionsRow').classList.toggle('hidden',st.A.ejections+st.B.ejections===0);clearError()}catch(e){showError(e)}}
+startVisibility('stats',false);update();setInterval(update,refresh*1000);
+</script></body></html>
