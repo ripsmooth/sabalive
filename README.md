@@ -128,6 +128,19 @@ Tulostaulun tapahtumagrafiikka rikastaa maalit `match.events`-listan tiedoilla: 
 - `?remote=1` – ottaa sivun mukaan etäohjauksen näkyvyystilaan
 
 
+## Tulostaulun ja tehopelaajien siirrot
+
+`salibandy-tulostaulu.html` ja `salibandy-tehopelaajat.html` tukevat `offsetX`- ja `offsetY`-URL-parametreja. Jos parametreja ei ole, tulostaulun oletussiirto on X=50, Y=40 ja tehopelaajien X=50, Y=130. Parametrien puuttuminen ei enää muutu virheellisesti nollaksi.
+
+Esimerkit:
+
+- `salibandy-tulostaulu.html?match_id=953141&offsetX=200&offsetY=150`
+- `salibandy-tehopelaajat.html?match_id=953141&offsetX=200&offsetY=250`
+
+Lisäämällä `&debug=1` sivu näyttää käytetyt offset-arvot, selainlähteen koon sekä grafiikan lasketun sijainnin. Ohjauspaneelissa on erilliset kentät molempien grafiikoiden X/Y-arvoille; kopioi sen jälkeen uudet URL-osoitteet OBS:n selainlähteisiin.
+
+**OBS-huomio:** HTML:n siirrot ovat suhteessa selainlähteen omaan näkymään, eivät OBS:n Lähteen muunnos → Sijainti -arvoihin. Jos haluat asettaa grafiikan tiettyyn kohtaan koko 1920 × 1080 -kuvassa, aseta selainlähteen koko 1920 × 1080 ja anna grafiikan sijainnin tulla `offsetX`/`offsetY`-arvoista. Jos selainlähde on esimerkiksi vain 575 × 200 pikseliä, siirtäminen sen sisällä voi rajata grafiikkaa; tällöin muuta lähteen sijaintia OBS:ssa tai käytä koko ruudun selainlähdettä.
+
 ## Ottelun tehopelaajat
 
 `salibandy-tehopelaajat.html` näyttää rinnakkain molempien joukkueiden pelaajat, joilla on vähintään yksi tehopiste. Pelaajat lajitellaan pisteiden, maalien ja syöttöjen mukaan. Rivillä näkyvät maalit + syötöt = pisteet (esim. `3 + 0 = 3`). Tiedot luetaan otteluvastauksen `lineups`-listan `goals`, `assists` ja `points` -kentistä.
