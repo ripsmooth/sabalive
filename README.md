@@ -80,14 +80,23 @@ Lisää muuttujat Production-ympäristöön (ja halutessasi Previewyn) ja tee Ve
 Jos API näyttää virheen 503, jokin yllä olevista ympäristömuuttujista puuttuu. Jos tallennus epäonnistuu oikeusvirheeseen, tarkista että tokenilla on kyseiseen repositoryyn Contents read/write -oikeus.
 
 
-## Tulostaulun eränäyttö (valinnainen)
+## Tulostaulun automaattinen eränäyttö (valinnainen)
 
-Tulostaulun tavallinen sekuntikello toimii ennallaan, kun URL-osoitteessa ei ole eränäytön parametreja. Jos haluat kellon paikalle erätunnuksen, lisää `clockmode=period` ja `period`-arvo:
+Tulostaulun tavallinen sekuntikello toimii ennallaan, kun eränäytön parametria ei käytetä. Kun haluat kellon paikalle virallisen tulospalvelun ilmoittaman erän, lisää URL-osoitteeseen joko `clock=period` tai `clockmode=period`. Molemmat toimivat.
 
-- `salibandy-tulostaulu.html?clockmode=period&period=1` → `1. ERÄ`
-- `salibandy-tulostaulu.html?clockmode=period&period=2` → `2. ERÄ`
-- `salibandy-tulostaulu.html?clockmode=period&period=3` → `3. ERÄ`
-- `salibandy-tulostaulu.html?clockmode=period&period=JA` → `JA` (jatkoaika)
-- `salibandy-tulostaulu.html?clockmode=period&period=RL` → `RL` (rangaistuslaukaukset)
+Esimerkki:
 
-Tämä parametri on tarkoitettu tulostaulun kellon paikalle tulevaan erämerkintään. Se ei muuta varsinaisen ottelukellon toimintaa muissa URL-osoitteissa. Eräarvo annetaan URL:ssa, joten lähetysohjaaja voi vaihtaa sen tarpeen mukaan. `match_id`, `scale`, `refresh` ja muut aiemmat parametrit toimivat edelleen yhdessä tämän kanssa.
+`salibandy-tulostaulu.html?match_id=935611&clock=period`
+
+Grafiikka lukee erän ottelun TorneoPal-tiedoista: ensisijaisesti `live_period`-kentästä. Arvot 1–3 näytetään muodossa `1. ERÄ`, `2. ERÄ` ja `3. ERÄ`. Kun rajapinta ilmoittaa seuraavan jakson ja ottelun tiedoissa on jatkoajan asetukset, näytetään `JA`; jatkoajan jälkeinen rangaistuslaukausjakso näytetään `RL`. Erätieto päivittyy samalla kyselyvälillä kuin muutkin ottelutiedot.
+
+Halutessasi voit edelleen asettaa manuaalisen yliajon `period`-parametrilla:
+
+- `?clock=period&period=1` → `1. ERÄ`
+- `?clock=period&period=2` → `2. ERÄ`
+- `?clock=period&period=3` → `3. ERÄ`
+- `?clock=period&period=JA` → `JA`
+- `?clock=period&period=RL` → `RL`
+
+Jos rajapinta ei palauta voimassa olevaa erätietoa, grafiikka näyttää viivan (`—`) eikä arvaa eräksi ensimmäistä erää. Ottelun tunnisteena hyväksytään `match_id`, `ottelu` tai `match`.
+
