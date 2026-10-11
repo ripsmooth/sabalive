@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="fi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Salibandy · Sarjataulukko</title>
+<style>
+:root{--ink:#101820;--panel:#1b2a35;--accent:#e8c547;--white:#fff;--muted:#bdc7d0;--scale:1;--gfx-width:1100px}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:transparent;overflow:hidden}
+body{font-family:Arial,Helvetica,sans-serif;color:var(--white);font-variant-numeric:tabular-nums}
+.gfx{filter:drop-shadow(0 4px 8px rgba(0,0,0,.3))}
+.stage{position:absolute;left:8px;top:8px;width:var(--gfx-width);max-width:calc(100vw - 16px);transform:scale(var(--scale));transform-origin:top left}
+.heading{min-height:62px;display:flex;align-items:center;justify-content:space-between;gap:18px;background:var(--ink);border-bottom:4px solid var(--accent);padding:12px 20px}
+.heading-title{font-size:25px;font-weight:900;letter-spacing:.06em;text-transform:uppercase}
+.competition{font-size:15px;color:var(--muted);font-weight:800;text-align:right}
+.subheading{background:var(--panel);padding:9px 20px;font-size:13px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+table{width:100%;border-collapse:collapse;background:rgba(16,24,32,.97)}
+thead{background:var(--accent);color:var(--ink)}
+th{font-size:13px;text-transform:uppercase;letter-spacing:.04em;font-weight:900;padding:10px 9px;text-align:right;white-space:nowrap}
+th:nth-child(2){text-align:left}
+td{padding:10px 9px;border-bottom:1px solid #34434d;text-align:right;font-size:17px;font-weight:800;white-space:nowrap}
+td:nth-child(2){text-align:left;white-space:normal}
+tbody tr:nth-child(even){background:rgba(27,42,53,.96)}
+tbody tr.featured{background:#263b48;box-shadow:inset 4px 0 0 var(--accent)}
+.rank{color:var(--accent);font-weight:900;width:48px}
+.team{font-weight:900;text-transform:uppercase}
+.points{color:var(--accent);font-size:20px}
+.note{padding:10px 14px;background:rgba(16,24,32,.96);color:var(--muted);font-size:12px;border-top:2px solid var(--accent)}
+.err{position:fixed;left:8px;bottom:8px;background:rgba(16,24,32,.96);border-left:4px solid var(--accent);padding:10px 14px;color:#fff;font-size:14px;max-width:calc(100vw - 16px)}
+.hidden{display:none!important}
+@media(max-width:700px){.heading{min-height:48px;padding:8px 12px}.heading-title{font-size:18px}.competition{font-size:11px}.subheading{padding:7px 12px;font-size:11px}th{font-size:10px;padding:7px 4px}td{font-size:12px;padding:8px 4px}.points{font-size:14px}.rank{width:28px}.note{font-size:10px}}
+</style></head><body>
+<div class="gfx stage">
+ <div class="heading"><div class="heading-title">Sarjataulukko</div><div class="competition" id="competition">SALIBANDY · SARJA</div></div>
+ <div class="subheading" id="group">Ladataan ottelun sarjaa…</div>
+ <table><thead><tr><th>Sij.</th><th>Joukkue</th><th>O</th><th>V</th><th>T</th><th>H</th><th>M</th><th>ME</th><th>P</th></tr></thead><tbody id="rows"><tr><td colspan="9" style="text-align:center;padding:24px">Haetaan sarjataulukkoa…</td></tr></tbody></table>
+ <div class="note" id="note">Tiedot haetaan ottelun sarjan TorneoPal-datasta.</div>
+</div><div id="error" class="err hidden"></div>
+<script>
+const q=new URLSearchParams(location.search),matchId=q.get('match_id')||q.get('ottelu')||'953141';
+const scale=Math.max(.5,Math.min(2.5,Number(q.get('scale')||1))),width=Math.max(500,Math.min(1920,Number(q.get('width')||1100)));
+document.documentElement.style.setProperty('--scale',scale);document.documentElement.style.setProperty('--gfx-width',width+'px');
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const val=(o,keys,def='—')=>{for(const k of keys){if(o?.[k]!==undefined&&o[k]!==null&&o[k]!=='')return o[k]}return def};
+function num(o,keys){const n=Number(val(o,keys,NaN));return Number.isFinite(n)?n:null}
+function rowData(t,i){
+ const played=num(t,['matches_played','played','matches','games_played','games'])??0;
+ const won=num(t,['matches_won','won','wins'])??0;
+ const tied=num(t,['matches_tied','tied','draws'])??0;
+ const lost=num(t,['matches_lost','lost','losses'])??0;
+ const gf=num(t,['goals_for','goals_scored','score_for','gf','goals_A']);
+ const ga=num(t,['goals_against','goals_conceded','score_against','ga','goals_B']);
+ const gd=num(t,['goal_difference','goals_diff','goal_diff','gd']);
+ const goals=(gf!==null&&ga!==null)?`${gf}–${ga}`:'—';
+ const diff=gd!==null?gd:(gf!==null&&ga!==null?gf-ga:null);
+ const points=num(t,['points','total_points','p'])??0;
+ const rank=num(t,['current_standing','standing','position','rank'])??(i+1);
+ return {t,played,won,tied,lost,goals,diff,points,rank};
+}
+function render(data){
+ const m=data.match||{},teams=Array.isArray(data.teams)?data.teams:[];
+ $('competition').textContent=[m.competition_name,m.category_name].filter(Boolean).join(' · ')||'SALIBANDY · SARJA';
+ $('group').textContent=[m.category_name,m.group_name].filter(Boolean).join(' · ')||'SARJATAULUKKO';
+ if(!teams.length){$('rows').innerHTML='<tr><td colspan="9" style="text-align:center;padding:24px">Sarjataulukon joukkueita ei saatu lähdedatasta.</td></tr>';$('note').textContent='Tarkista, että ottelulle on julkaistu sarjataulukko.';return}
+ const A=String(m.team_A_id||''),B=String(m.team_B_id||'');
+ const sorted=teams.map(rowData).sort((a,b)=>a.rank-b.rank||b.points-a.points);
+ $('rows').innerHTML=sorted.map(x=>{
+   const id=String(val(x.t,['team_id','id'],''));
+   const featured=(id&&[A,B].includes(id))?'featured':'';
+   const name=val(x.t,['team_name','name'],'Tuntematon joukkue');
+   return `<tr class="${featured}"><td class="rank">${esc(x.rank)}</td><td class="team">${esc(name)}</td><td>${esc(val(x.t,['matches_played','played','matches','games_played','games'],x.played))}</td><td>${esc(val(x.t,['matches_won','won','wins'],x.won))}</td><td>${esc(val(x.t,['matches_tied','tied','draws'],x.tied))}</td><td>${esc(val(x.t,['matches_lost','lost','losses'],x.lost))}</td><td>${esc(x.goals)}</td><td>${x.diff===null?'—':(x.diff>0?'+':'')+esc(x.diff)}</td><td class="points">${esc(x.points)}</td></tr>`;
+ }).join('');
+ $('note').textContent='Ottelun joukkueet on korostettu keltaisella reunuksella. Tiedot: TorneoPal.';
+ $('error').classList.add('hidden');
+}
+async function update(){try{const u=new URL('/api/salibandy-standings',location.origin);u.searchParams.set('match_id',matchId);u.searchParams.set('timeStamp',Date.now());const r=await fetch(u,{cache:'no-store'});const d=await r.json();if(!r.ok)throw Error(d.error||'Sarjataulukon haku epäonnistui.');render(d)}catch(e){$('error').textContent='Sarjataulukko: '+(e.message||e);$('error').classList.remove('hidden')}}
+update();setInterval(update,30000);
+</script></body></html>

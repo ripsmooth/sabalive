@@ -8,6 +8,8 @@ Tämä on **täysin erillinen GitHub/Vercel-projekti** salibandyn lähetysgrafii
 - `salibandy-tulostaulu.html` – tulostaulu
 - `salibandy-lowerthird.html` – maalintekijägrafiikka
 - `salibandy-tilastot.html` – tilastot
+- `salibandy-sarjataulukko.html` – ottelun sarjan sarjataulukko
+- `api/salibandy-standings.js` – ottelun sarjan ja lohkon sarjataulukon haku TorneoPalista
 - `salibandy-kokoonpanot.html` – joukkueiden kokoonpanot
 - `salibandy-grafiikkaohjaus.html` – grafiikoiden ohjauspaneeli
 - `api/salibandy-match.js` – ottelutiedot Salibandyliiton TorneoPal-rajapinnasta
