@@ -11,23 +11,23 @@ body.gfx-hidden .gfx{opacity:0;pointer-events:none}
 .logo{object-fit:contain;display:block}
 .fallback{display:flex;align-items:center;justify-content:center;border:2px solid var(--accent);border-radius:50%;color:var(--accent);font-weight:900;background:var(--ink);flex:0 0 auto}
 
-.stage{position:absolute;left:calc(50% + var(--offset-x));top:calc(8px + var(--offset-y));width:var(--gfx-width);max-width:calc(100vw - 16px);transform:translateX(-50%) scale(var(--scale), var(--scale-y, var(--scale)));transform-origin:top center}
+.stage{position:fixed;left:calc(50% + var(--offset-x));top:calc(50% + var(--offset-y));width:var(--gfx-width);max-width:none;transform:translate(-50%,-50%) scale(var(--scale), var(--scale-y, var(--scale)));transform-origin:center center}
 .header{height:112px;display:grid;grid-template-columns:minmax(0,1fr) 250px minmax(0,1fr);align-items:stretch;background:var(--accent);border-bottom:4px solid var(--accent)}
 .team{display:flex;align-items:center;gap:17px;padding:12px 24px;min-width:0;background:rgba(16,24,32,.98)}.team.b{flex-direction:row-reverse;text-align:right}
 .logo{width:70px;height:70px;flex:0 0 70px}.fallback{width:70px;height:70px;font-size:22px}
 .teamname{font-size:clamp(18px,2vw,31px);font-weight:900;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mid{display:flex;align-items:center;justify-content:center;background:var(--accent);color:var(--ink);font-size:26px;font-weight:900;text-transform:uppercase;text-align:center;clip-path:polygon(9% 0,91% 0,100% 100%,0 100%);padding:8px}
 .cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
-.roster{background:rgba(16,24,32,.97);border-top:3px solid var(--accent);min-width:0;max-height:calc(100vh - 160px);overflow:hidden}
+.roster{background:rgba(16,24,32,.97);border-top:3px solid var(--accent);min-width:0;overflow:visible}
 .roster-title{background:var(--panel);padding:11px 18px;display:flex;justify-content:space-between;font-size:16px;font-weight:900;text-transform:uppercase;letter-spacing:.04em}
 .roster-title span:last-child{color:var(--accent);font-size:12px}
-.players{padding:7px 14px 12px;display:grid;grid-template-columns:1fr 1fr;gap:4px 12px}
-.player{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:8px;align-items:center;min-height:32px;border-bottom:1px solid #34434d;padding:3px 1px}
+.players{padding:7px 14px 12px;display:grid;grid-template-columns:minmax(0,1fr);gap:0}
+.player{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:8px;align-items:center;min-height:30px;border-bottom:1px solid #34434d;padding:2px 1px}
 .number{display:flex;justify-content:center;align-items:center;background:var(--accent);color:var(--ink);font-size:15px;font-weight:900;min-height:25px;clip-path:polygon(0 0,100% 0,86% 100%,0 100%)}
 .pname{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tag{color:var(--accent);font-size:10px;font-weight:900;white-space:nowrap}
 .empty{padding:18px;color:var(--muted);font-size:14px}
-@media(max-width:750px){.header{height:82px;grid-template-columns:minmax(0,1fr) 110px minmax(0,1fr)}.team{gap:8px;padding:7px}.logo,.fallback{width:43px;height:43px;flex-basis:43px}.teamname{font-size:13px}.mid{font-size:15px}.players{grid-template-columns:1fr;padding:5px}.pname{font-size:12px}.player{grid-template-columns:30px minmax(0,1fr) auto}.number{font-size:12px}}
+@media(max-width:750px){.header{height:82px;grid-template-columns:minmax(0,1fr) 110px minmax(0,1fr)}.team{gap:8px;padding:7px}.logo,.fallback{width:43px;height:43px;flex-basis:43px}.teamname{font-size:13px}.mid{font-size:15px}.players{grid-template-columns:minmax(0,1fr);padding:5px}.pname{font-size:12px}.player{grid-template-columns:30px minmax(0,1fr) auto}.number{font-size:12px}}
 </style></head><body><div class="gfx stage">
 <div class="header"><div class="team"><div id="logoA" class="fallback">A</div><div id="teamAName" class="teamname">KOTI</div></div><div class="mid">KOKOONPANOT</div><div class="team b"><div id="teamBName" class="teamname">VIERAS</div><div id="logoB" class="fallback">B</div></div></div>
 <div class="cols"><section class="roster"><div class="roster-title"><span id="titleA">KOTI</span><span id="countA">PELAAJAT</span></div><div id="playersA" class="players"></div><div id="emptyA" class="empty hidden">Kokoonpanoa ei ole julkaistu.</div></section><section class="roster"><div class="roster-title"><span id="titleB">VIERAS</span><span id="countB">PELAAJAT</span></div><div id="playersB" class="players"></div><div id="emptyB" class="empty hidden">Kokoonpanoa ei ole julkaistu.</div></section></div>
@@ -64,52 +64,42 @@ async function update(){try{const m=await getMatch(),t=teamFields(m);setLogo('lo
 startVisibility('lineups',false);update();setInterval(update,refresh*1000);
 </script>
 <script>
-/* URL-kohtainen koon hienosäätö: width= ja height= ovat pikseleitä ennen yleistä scale-kerrointa. */
-(function applyManualDimensions(){
-  const sizeParams = new URLSearchParams(window.location.search);
-  const sizeStage = document.querySelector('.stage');
-  if (!sizeStage) return;
-  const defaultWidth = 1400;
-  const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
-  const queryNumber = (key, fallback, min, max) => {
-    if (!sizeParams.has(key)) return fallback;
-    const n = Number(sizeParams.get(key));
-    return Number.isFinite(n) && n > 0 ? clamp(n, min, max) : fallback;
-  };
-  const targetWidth = queryNumber('width', defaultWidth, 240, 2400);
-  const requestedHeight = sizeParams.has('height') ? queryNumber('height', null, 40, 2160) : null;
-  const overallScale = queryNumber('scale', 1, 0.5, 2.5);
-  const root = document.documentElement;
-  root.style.setProperty('--scale', String(overallScale));
-  root.style.setProperty('--gfx-width', targetWidth + 'px');
-  root.style.setProperty('--score-width', targetWidth + 'px');
-  /* Inline-arvot voittavat vanhat sivukohtaiset max-width/width-säännöt. */
-  sizeStage.style.width = targetWidth + 'px';
-  sizeStage.style.maxWidth = 'none';
-
-  let debugBox = null;
-  if (sizeParams.get('debug') === '1') {
-    debugBox = document.createElement('div');
-    debugBox.style.cssText = 'position:fixed;right:8px;bottom:8px;z-index:2147483647;background:rgba(16,24,32,.96);border:1px solid #e8c547;color:#fff;padding:7px 9px;font:12px/1.45 Arial,sans-serif;pointer-events:none;white-space:pre-line';
+/* Kokoonpanot keskelle ruutua; width/height/scale säilyvät URL-säätiminä. */
+(function applyLineupDimensions(){
+  const params=new URLSearchParams(window.location.search);
+  const stage=document.querySelector('.stage');
+  if(!stage)return;
+  const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
+  const read=(key,fallback,min,max)=>{if(!params.has(key))return fallback;const n=Number(params.get(key));return Number.isFinite(n)&&n>0?clamp(n,min,max):fallback};
+  const baseWidth=read('width',1400,240,2400);
+  const requestedHeight=params.has('height')?read('height',null,40,2160):null;
+  const preferredScale=read('scale',1,0.5,2.5);
+  const offsetX=params.has('offsetX')&&Number.isFinite(Number(params.get('offsetX')))?Number(params.get('offsetX')):0;
+  const offsetY=params.has('offsetY')&&Number.isFinite(Number(params.get('offsetY')))?Number(params.get('offsetY')):0;
+  const root=document.documentElement;
+  root.style.setProperty('--gfx-width',baseWidth+'px');
+  root.style.setProperty('--offset-x',offsetX+'px');
+  root.style.setProperty('--offset-y',offsetY+'px');
+  stage.style.width=baseWidth+'px';stage.style.maxWidth='none';
+  let debugBox=null;
+  if(params.get('debug')==='1'){
+    debugBox=document.createElement('div');
+    debugBox.style.cssText='position:fixed;right:8px;bottom:8px;z-index:2147483647;background:rgba(16,24,32,.96);border:1px solid #e8c547;color:#fff;padding:7px 9px;font:12px/1.45 Arial,sans-serif;pointer-events:none;white-space:pre-line';
     document.body.appendChild(debugBox);
   }
-  function updateSize(){
-    const naturalHeight = sizeStage.offsetHeight;
-    if (!naturalHeight) return;
-    const verticalFit = requestedHeight === null ? 1 : requestedHeight / naturalHeight;
-    root.style.setProperty('--scale-y', String(overallScale * verticalFit));
-    if (debugBox) {
-      const r = sizeStage.getBoundingClientRect();
-      debugBox.textContent = 'KOKOSÄÄDÖT\nwidth=' + targetWidth + ' px\nheight=' + (requestedHeight === null ? 'auto (' + Math.round(naturalHeight) + ' px)' : requestedHeight + ' px') + '\nscale=' + overallScale + '\nNäkyvä laatikko: ' + Math.round(r.width) + ' × ' + Math.round(r.height) + ' px';
-    }
+  function fit(){
+    const w=stage.offsetWidth,h=stage.offsetHeight;if(!w||!h)return;
+    const yFactor=requestedHeight===null?1:requestedHeight/h;
+    const desiredW=w*preferredScale,desiredH=h*preferredScale*yFactor;
+    const availableW=Math.max(120,window.innerWidth-32-Math.abs(offsetX)*2);
+    const availableH=Math.max(120,window.innerHeight-32-Math.abs(offsetY)*2);
+    const autoFit=Math.min(1,availableW/desiredW,availableH/desiredH);
+    const sx=preferredScale*autoFit,sy=preferredScale*yFactor*autoFit;
+    root.style.setProperty('--scale',String(sx));root.style.setProperty('--scale-y',String(sy));
+    if(debugBox){const r=stage.getBoundingClientRect();debugBox.textContent='KOKOONPANOT\nLeveys: '+baseWidth+' px\nSisällön korkeus: '+Math.round(h)+' px\nSkaala: '+sx.toFixed(3)+' × '+sy.toFixed(3)+'\nNäkyvä koko: '+Math.round(r.width)+' × '+Math.round(r.height)+' px'}
   }
-  /* Sisältökorkeus voi muuttua, kun pelaajat/tapahtumat päivittyvät. */
-  if ('ResizeObserver' in window) {
-    const ro = new ResizeObserver(() => requestAnimationFrame(updateSize));
-    ro.observe(sizeStage);
-  }
-  window.addEventListener('resize', updateSize);
-  requestAnimationFrame(updateSize);
+  if('ResizeObserver'in window){const ro=new ResizeObserver(()=>requestAnimationFrame(fit));ro.observe(stage)}
+  window.addEventListener('resize',fit);requestAnimationFrame(fit);
 })();
 </script>
 </body></html>

@@ -102,7 +102,7 @@ function formatClockSeconds(total){total=Math.max(0,Math.floor(total));const mm=
 function timerRunning(m){const v=m.live_timer_on;return v===true||v===1||v==='1'||String(v).toLowerCase()==='true'||String(v).toLowerCase()==='on'}
 function matchClock(m){
  const status=String(m.status||'').toLowerCase();
- if(['played','finished','over'].includes(status)){clockFinished=true;clockIsRunning=false;return 'LOPPUTULOS'}
+ if(['played','finished','over'].includes(status)){clockFinished=true;clockIsRunning=false;return 'LT'}
  clockFinished=false;
  const running=timerRunning(m);
  const periodKey=String(m.live_period??m.period??m.period_no??m.period_number??m.current_period??'');

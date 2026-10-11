@@ -6,7 +6,7 @@
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:transparent;overflow:hidden}
 body{font-family:Arial,Helvetica,sans-serif;color:var(--white);font-variant-numeric:tabular-nums}
 .gfx{filter:drop-shadow(0 4px 8px rgba(0,0,0,.3))}
-.stage{position:absolute;left:calc(50% + var(--offset-x));top:calc(8px + var(--offset-y));width:var(--gfx-width);max-width:calc(100vw - 16px);transform:translateX(-50%) scale(var(--scale), var(--scale-y, var(--scale)));transform-origin:top center}
+.stage{position:fixed;left:calc(50% + var(--offset-x));top:calc(50% + var(--offset-y));width:var(--gfx-width);max-width:none;transform:translate(-50%,-50%) scale(var(--scale), var(--scale-y, var(--scale)));transform-origin:center center}
 .heading{min-height:62px;display:flex;align-items:center;justify-content:space-between;gap:18px;background:var(--ink);border-bottom:4px solid var(--accent);padding:12px 20px}
 .heading-title{font-size:25px;font-weight:900;letter-spacing:.06em;text-transform:uppercase}
 .competition{font-size:15px;color:var(--muted);font-weight:800;text-align:right}
@@ -76,52 +76,60 @@ async function update(){try{await ensureMatchId();const u=new URL('/api/saliband
 update();setInterval(update,30000);
 </script>
 <script>
-/* URL-kohtainen koon hienosäätö: width= ja height= ovat pikseleitä ennen yleistä scale-kerrointa. */
-(function applyManualDimensions(){
-  const sizeParams = new URLSearchParams(window.location.search);
-  const sizeStage = document.querySelector('.stage');
-  if (!sizeStage) return;
-  const defaultWidth = 1100;
-  const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
-  const queryNumber = (key, fallback, min, max) => {
-    if (!sizeParams.has(key)) return fallback;
-    const n = Number(sizeParams.get(key));
-    return Number.isFinite(n) && n > 0 ? clamp(n, min, max) : fallback;
+/* Sarjataulukko: 50 % suurempi oletuskoko, keskitys ja automaattinen sovitus ruutuun. */
+(function applyStandingsLayout(){
+  const params = new URLSearchParams(window.location.search);
+  const stage = document.querySelector('.stage');
+  if (!stage) return;
+  const clamp = (n,min,max) => Math.max(min,Math.min(max,n));
+  const read = (key,fallback,min,max) => {
+    if (!params.has(key)) return fallback;
+    const n = Number(params.get(key));
+    return Number.isFinite(n) && n > 0 ? clamp(n,min,max) : fallback;
   };
-  const targetWidth = queryNumber('width', defaultWidth, 240, 2400);
-  const requestedHeight = sizeParams.has('height') ? queryNumber('height', null, 40, 2160) : null;
-  const overallScale = queryNumber('scale', 1, 0.5, 2.5);
+  const baseWidth = read('width',1100,240,2400);
+  const requestedHeight = params.has('height') ? read('height',null,40,2160) : null;
+  const preferredScale = read('scale',1.5,0.5,2.5);
+  const offsetX = Number.isFinite(Number(params.get('offsetX'))) && params.has('offsetX') ? Number(params.get('offsetX')) : 0;
+  const offsetY = Number.isFinite(Number(params.get('offsetY'))) && params.has('offsetY') ? Number(params.get('offsetY')) : 0;
   const root = document.documentElement;
-  root.style.setProperty('--scale', String(overallScale));
-  root.style.setProperty('--gfx-width', targetWidth + 'px');
-  root.style.setProperty('--score-width', targetWidth + 'px');
-  /* Inline-arvot voittavat vanhat sivukohtaiset max-width/width-säännöt. */
-  sizeStage.style.width = targetWidth + 'px';
-  sizeStage.style.maxWidth = 'none';
+  root.style.setProperty('--gfx-width',baseWidth+'px');
+  root.style.setProperty('--offset-x',offsetX+'px');
+  root.style.setProperty('--offset-y',offsetY+'px');
+  stage.style.width = baseWidth+'px';
+  stage.style.maxWidth = 'none';
 
   let debugBox = null;
-  if (sizeParams.get('debug') === '1') {
+  if (params.get('debug') === '1') {
     debugBox = document.createElement('div');
-    debugBox.style.cssText = 'position:fixed;right:8px;bottom:8px;z-index:2147483647;background:rgba(16,24,32,.96);border:1px solid #e8c547;color:#fff;padding:7px 9px;font:12px/1.45 Arial,sans-serif;pointer-events:none;white-space:pre-line';
+    debugBox.style.cssText='position:fixed;right:8px;bottom:8px;z-index:2147483647;background:rgba(16,24,32,.96);border:1px solid #e8c547;color:#fff;padding:7px 9px;font:12px/1.45 Arial,sans-serif;pointer-events:none;white-space:pre-line';
     document.body.appendChild(debugBox);
   }
-  function updateSize(){
-    const naturalHeight = sizeStage.offsetHeight;
-    if (!naturalHeight) return;
-    const verticalFit = requestedHeight === null ? 1 : requestedHeight / naturalHeight;
-    root.style.setProperty('--scale-y', String(overallScale * verticalFit));
+  function fitToViewport(){
+    const naturalWidth = stage.offsetWidth;
+    const naturalHeight = stage.offsetHeight;
+    if (!naturalWidth || !naturalHeight) return;
+    const verticalFit = requestedHeight === null ? 1 : requestedHeight/naturalHeight;
+    const desiredWidth = naturalWidth*preferredScale;
+    const desiredHeight = naturalHeight*preferredScale*verticalFit;
+    const availableWidth = Math.max(120,window.innerWidth-32-Math.abs(offsetX)*2);
+    const availableHeight = Math.max(120,window.innerHeight-32-Math.abs(offsetY)*2);
+    const autoFit = Math.min(1,availableWidth/desiredWidth,availableHeight/desiredHeight);
+    const sx = preferredScale*autoFit;
+    const sy = preferredScale*verticalFit*autoFit;
+    root.style.setProperty('--scale',String(sx));
+    root.style.setProperty('--scale-y',String(sy));
     if (debugBox) {
-      const r = sizeStage.getBoundingClientRect();
-      debugBox.textContent = 'KOKOSÄÄDÖT\nwidth=' + targetWidth + ' px\nheight=' + (requestedHeight === null ? 'auto (' + Math.round(naturalHeight) + ' px)' : requestedHeight + ' px') + '\nscale=' + overallScale + '\nNäkyvä laatikko: ' + Math.round(r.width) + ' × ' + Math.round(r.height) + ' px';
+      const rect = stage.getBoundingClientRect();
+      debugBox.textContent='SARJATAULUKON MITAT\nLeveysasetuksen pohja: '+baseWidth+' px\nSisällön korkeus: '+Math.round(naturalHeight)+' px\nSkaala: '+sx.toFixed(3)+' × '+sy.toFixed(3)+'\nNäkyvä koko: '+Math.round(rect.width)+' × '+Math.round(rect.height)+' px';
     }
   }
-  /* Sisältökorkeus voi muuttua, kun pelaajat/tapahtumat päivittyvät. */
   if ('ResizeObserver' in window) {
-    const ro = new ResizeObserver(() => requestAnimationFrame(updateSize));
-    ro.observe(sizeStage);
+    const observer = new ResizeObserver(()=>requestAnimationFrame(fitToViewport));
+    observer.observe(stage);
   }
-  window.addEventListener('resize', updateSize);
-  requestAnimationFrame(updateSize);
+  window.addEventListener('resize',fitToViewport);
+  requestAnimationFrame(fitToViewport);
 })();
 </script>
 </body></html>

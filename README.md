@@ -151,3 +151,10 @@ Esimerkki: `salibandy-tulostaulu.html?width=650&height=90&offsetX=50&offsetY=40`
 Esikatseluun voi lisätä `debug=1`, jolloin sivun oikeaan alakulmaan tulee näkyvien mittojen diagnostiikka.
 
 Oletusleveydet: tulostaulu 575 px; tehopelaajat 575 px; tilastot 1400 px; Lower Third 1400 px; ottelun tapahtumat 1200 px; kokoonpanot 1400 px; sarjataulukko 1100 px. Korkeus on oletuksena automaattinen ja riippuu näkymän sisällöstä.
+
+
+## Viimeisimmät ulkoasumuutokset
+
+- Sarjataulukko käyttää nyt 1,5-kertaista oletusskaalaa ja keskitetään sekä vaaka- että pystysuunnassa. Jos taulukko ei mahdu näyttöön, skaala pienenee automaattisesti koko taulukon mittasuhteet säilyttäen. `width=`, `height=`, `scale=`, `offsetX=`, `offsetY=` ja `debug=1` ovat edelleen käytettävissä.
+- Tulostaulun pelikellossa ottelun päättymismerkintä on `LT` (ei enää `LOPPUTULOS`).
+- Kokoonpanot-sivulla jokaisen joukkueen pelaajat näytetään yhdessä pystysarakkeessa. Grafiikka keskitetään näytön keskelle ja skaalataan tarvittaessa niin, että sisältö mahtuu ruutuun.
