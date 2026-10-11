@@ -45,7 +45,7 @@ function teamFields(m){return {a:{id:String(m.team_A_id||''),name:m.team_A_name|
 function getScore(m){return {a:m.live_A??m.fs_A??'0',b:m.live_B??m.fs_B??'0'}}
 function matchClock(m){const status=String(m.status||'').toLowerCase();if(['played','finished','over'].includes(status))return 'LOPPUTULOS';if(m.live_time_mmss)return String(m.live_time_mmss);if(m.live_time)return String(m.live_time);return m.time?String(m.time).slice(0,5):''}
 async function updateVisibility(key,defaultVisible){try{const r=await fetch('/api/salibandy-graphics-state',{cache:'no-store'});if(!r.ok)return;const d=await r.json();document.body.classList.toggle('gfx-hidden',d[key]!==true)}catch(e){/* retain default visibility if remote control is unreachable */}}
-function startVisibility(key,defaultVisible){if(!defaultVisible)document.body.classList.add('gfx-hidden');updateVisibility(key,defaultVisible);setInterval(()=>updateVisibility(key,defaultVisible),2000)}
+function startVisibility(key,defaultVisible){const remote=new URLSearchParams(location.search).get('remote')==='1';if(!remote){document.body.classList.remove('gfx-hidden');return}if(!defaultVisible)document.body.classList.add('gfx-hidden');updateVisibility(key,defaultVisible);setInterval(()=>updateVisibility(key,defaultVisible),2000)}
 function showError(err){const e=$('error');if(e){e.textContent='Salibandy: '+(err?.message||err);e.classList.remove('hidden')}}
 function clearError(){const e=$('error');if(e)e.classList.add('hidden')}
 

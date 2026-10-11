@@ -51,3 +51,8 @@ Lisää muuttujat Vercelin Project Settings → Environment Variables -osiossa j
 - Tämä projekti on erillinen. Älä tuo tähän jääpallon repositoryä äläkä yhdistä sitä BandyLive-projektiin.
 - Pelaaja- ja ottelutiedot riippuvat TorneoPalin julkisen rajapinnan vastauksesta.
 - Laukaus- ja torjuntatilastot näkyvät vain siltä osin kuin rajapinta tarjoaa ne.
+
+
+## Grafiikoiden oletusnäkyvyys
+
+Tulostaulu, tilastot, Lower Third ja kokoonpanot näkyvät oletuksena heti, eikä niiden näkyvyys riipu etäohjauksen/Upstashin asetuksista. Etäohjaus ja sen API-tiedostot ovat edelleen mukana paketissa valinnaista käyttöönottoa varten. Jos haluat yksittäisen grafiikan näkyvyyden etäohjauksen alaisuuteen, lisää sen URL-osoitteeseen `&remote=1` (tai jos URL:ssa ei ole kysymysmerkkiä, `?remote=1`). Ilman tätä parametria grafiikka pysyy päällä.

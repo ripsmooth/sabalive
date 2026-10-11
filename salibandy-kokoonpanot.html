@@ -28,7 +28,7 @@ body.gfx-hidden .gfx{opacity:0;pointer-events:none}
 .tag{color:var(--accent);font-size:10px;font-weight:900;white-space:nowrap}
 .empty{padding:18px;color:var(--muted);font-size:14px}
 @media(max-width:750px){.header{height:82px;grid-template-columns:minmax(0,1fr) 110px minmax(0,1fr)}.team{gap:8px;padding:7px}.logo,.fallback{width:43px;height:43px;flex-basis:43px}.teamname{font-size:13px}.mid{font-size:15px}.players{grid-template-columns:1fr;padding:5px}.pname{font-size:12px}.player{grid-template-columns:30px minmax(0,1fr) auto}.number{font-size:12px}}
-</style></head><body class="gfx-hidden"><div class="gfx stage">
+</style></head><body><div class="gfx stage">
 <div class="header"><div class="team"><div id="logoA" class="fallback">A</div><div id="teamAName" class="teamname">KOTI</div></div><div class="mid">KOKOONPANOT</div><div class="team b"><div id="teamBName" class="teamname">VIERAS</div><div id="logoB" class="fallback">B</div></div></div>
 <div class="cols"><section class="roster"><div class="roster-title"><span id="titleA">KOTI</span><span id="countA">PELAAJAT</span></div><div id="playersA" class="players"></div><div id="emptyA" class="empty hidden">Kokoonpanoa ei ole julkaistu.</div></section><section class="roster"><div class="roster-title"><span id="titleB">VIERAS</span><span id="countB">PELAAJAT</span></div><div id="playersB" class="players"></div><div id="emptyB" class="empty hidden">Kokoonpanoa ei ole julkaistu.</div></section></div>
 </div><div id="error" class="err hidden"></div>
@@ -49,7 +49,7 @@ function teamFields(m){return {a:{id:String(m.team_A_id||''),name:m.team_A_name|
 function getScore(m){return {a:m.live_A??m.fs_A??'0',b:m.live_B??m.fs_B??'0'}}
 function matchClock(m){const status=String(m.status||'').toLowerCase();if(['played','finished','over'].includes(status))return 'LOPPUTULOS';if(m.live_time_mmss)return String(m.live_time_mmss);if(m.live_time)return String(m.live_time);return m.time?String(m.time).slice(0,5):''}
 async function updateVisibility(key,defaultVisible){try{const r=await fetch('/api/salibandy-graphics-state',{cache:'no-store'});if(!r.ok)return;const d=await r.json();document.body.classList.toggle('gfx-hidden',d[key]!==true)}catch(e){/* retain default visibility if remote control is unreachable */}}
-function startVisibility(key,defaultVisible){if(!defaultVisible)document.body.classList.add('gfx-hidden');updateVisibility(key,defaultVisible);setInterval(()=>updateVisibility(key,defaultVisible),2000)}
+function startVisibility(key,defaultVisible){const remote=new URLSearchParams(location.search).get('remote')==='1';if(!remote){document.body.classList.remove('gfx-hidden');return}if(!defaultVisible)document.body.classList.add('gfx-hidden');updateVisibility(key,defaultVisible);setInterval(()=>updateVisibility(key,defaultVisible),2000)}
 function showError(err){const e=$('error');if(e){e.textContent='Salibandy: '+(err?.message||err);e.classList.remove('hidden')}}
 function clearError(){const e=$('error');if(e)e.classList.add('hidden')}
 

@@ -25,7 +25,7 @@ body.gfx-hidden .gfx{opacity:0;pointer-events:none}
 .value.a{justify-content:flex-start}.value.b{justify-content:flex-end}
 .label{background:#1b2a35;border-left:2px solid var(--accent);border-right:2px solid var(--accent);display:flex;align-items:center;justify-content:center;text-align:center;padding:7px 12px;font-size:16px;font-weight:900;line-height:1.15;letter-spacing:.025em;text-transform:uppercase}
 @media(max-width:750px){.header{height:105px;grid-template-columns:1fr 125px 1fr}.logo,.fallback{width:48px;height:48px}.teamname{font-size:14px}.heading{font-size:18px}.row{grid-template-columns:minmax(0,1fr) 150px minmax(0,1fr);min-height:45px}.value{font-size:20px;padding:5px 10px}.label{font-size:11px;padding:5px}}
-</style></head><body class="gfx-hidden"><div class="gfx stage">
+</style></head><body><div class="gfx stage">
 <div class="header"><div class="team a"><div id="logoA" class="fallback">A</div><div id="teamAName" class="teamname">KOTI</div></div><div class="heading">TILASTOT</div><div class="team b"><div id="logoB" class="fallback">B</div><div id="teamBName" class="teamname">VIERAS</div></div></div>
 <div class="rows">
 <div class="row"><div class="value a" id="shotsA">—</div><div class="label">Laukaukset<br>(tilastoidut)</div><div class="value b" id="shotsB">—</div></div>
@@ -51,7 +51,7 @@ function teamFields(m){return {a:{id:String(m.team_A_id||''),name:m.team_A_name|
 function getScore(m){return {a:m.live_A??m.fs_A??'0',b:m.live_B??m.fs_B??'0'}}
 function matchClock(m){const status=String(m.status||'').toLowerCase();if(['played','finished','over'].includes(status))return 'LOPPUTULOS';if(m.live_time_mmss)return String(m.live_time_mmss);if(m.live_time)return String(m.live_time);return m.time?String(m.time).slice(0,5):''}
 async function updateVisibility(key,defaultVisible){try{const r=await fetch('/api/salibandy-graphics-state',{cache:'no-store'});if(!r.ok)return;const d=await r.json();document.body.classList.toggle('gfx-hidden',d[key]!==true)}catch(e){/* retain default visibility if remote control is unreachable */}}
-function startVisibility(key,defaultVisible){if(!defaultVisible)document.body.classList.add('gfx-hidden');updateVisibility(key,defaultVisible);setInterval(()=>updateVisibility(key,defaultVisible),2000)}
+function startVisibility(key,defaultVisible){const remote=new URLSearchParams(location.search).get('remote')==='1';if(!remote){document.body.classList.remove('gfx-hidden');return}if(!defaultVisible)document.body.classList.add('gfx-hidden');updateVisibility(key,defaultVisible);setInterval(()=>updateVisibility(key,defaultVisible),2000)}
 function showError(err){const e=$('error');if(e){e.textContent='Salibandy: '+(err?.message||err);e.classList.remove('hidden')}}
 function clearError(){const e=$('error');if(e)e.classList.add('hidden')}
 
