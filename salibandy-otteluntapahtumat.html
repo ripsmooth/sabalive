@@ -13,7 +13,7 @@ body{font-family:Arial,Helvetica,sans-serif;color:var(--white);font-variant-nume
 body.gfx-hidden .gfx{opacity:0;pointer-events:none}
 .hidden{display:none!important}
 .err{position:fixed;left:8px;bottom:8px;z-index:10;background:rgba(16,24,32,.97);border-left:4px solid var(--accent);padding:10px 14px;color:#fff;font-size:14px;max-width:calc(100vw - 16px)}
-.stage{position:absolute;left:calc(50% + var(--offset-x));top:calc(8px + var(--offset-y));width:var(--gfx-width);max-width:calc(100vw - 16px);transform:translateX(-50%) scale(var(--scale), var(--scale-y, var(--scale)));transform-origin:top center}
+.stage{position:fixed;left:calc(50% + var(--offset-x));top:30px;width:var(--gfx-width);max-width:none;transform:translateX(-50%) scale(var(--scale), var(--scale-y, var(--scale)));transform-origin:top center}
 .header{display:grid;grid-template-columns:minmax(0,1fr) 250px minmax(0,1fr);min-height:124px;background:var(--accent);align-items:stretch;overflow:hidden}
 .team{min-width:0;background:rgba(16,24,32,.98);display:flex;align-items:center;gap:18px;padding:16px 22px}
 .team.a{clip-path:polygon(0 0,100% 0,calc(100% - 16px) 100%,0 100%)}
@@ -48,7 +48,7 @@ body.gfx-hidden .gfx{opacity:0;pointer-events:none}
 .event-row.timeout .event-side{background:#e5fbfc}
 .empty{min-height:100px;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;color:var(--muted);font-size:17px;font-weight:800;border:1px dashed #485660;background:rgba(27,42,53,.7)}
 .foot{padding:6px 12px 0;color:#c2ccd3;font-size:11px;text-align:right;font-weight:700;letter-spacing:.04em}
-@media(max-width:800px){.stage{left:calc(50% + var(--offset-x));top:calc(8px + var(--offset-y));max-width:none}.header{grid-template-columns:minmax(0,1fr) 118px minmax(0,1fr);min-height:86px}.team{gap:7px;padding:8px}.logo,.fallback{width:42px;height:42px;flex-basis:42px;font-size:14px}.teamname{font-size:clamp(12px,2.4vw,19px)}.score{font-size:29px}.clock{font-size:15px;margin-top:4px}.period{font-size:9px}.titlebar{padding:8px 10px}.title{font-size:16px}.competition{font-size:10px}.events{padding:5px;gap:4px;max-height:none;overflow:visible}.event-row{grid-template-columns:70px minmax(0,1fr) 72px;min-height:51px}.event-time{font-size:13px}.event-time small{font-size:8px}.event-main{gap:6px;padding:5px 7px;flex-wrap:wrap}.team-pill{font-size:9px;max-width:100%;gap:4px}.team-dot{width:6px;height:6px;flex-basis:6px}.event-name{font-size:12px}.event-detail{font-size:10px}.event-side{padding:4px}.type{font-size:9px}.meta{font-size:12px}.foot{font-size:9px}}
+@media(max-width:800px){.stage{position:fixed;left:calc(50% + var(--offset-x));top:30px;max-width:none}.header{grid-template-columns:minmax(0,1fr) 118px minmax(0,1fr);min-height:86px}.team{gap:7px;padding:8px}.logo,.fallback{width:42px;height:42px;flex-basis:42px;font-size:14px}.teamname{font-size:clamp(12px,2.4vw,19px)}.score{font-size:29px}.clock{font-size:15px;margin-top:4px}.period{font-size:9px}.titlebar{padding:8px 10px}.title{font-size:16px}.competition{font-size:10px}.events{padding:5px;gap:4px;max-height:none;overflow:visible}.event-row{grid-template-columns:70px minmax(0,1fr) 72px;min-height:51px}.event-time{font-size:13px}.event-time small{font-size:8px}.event-main{gap:6px;padding:5px 7px;flex-wrap:wrap}.team-pill{font-size:9px;max-width:100%;gap:4px}.team-dot{width:6px;height:6px;flex-basis:6px}.event-name{font-size:12px}.event-detail{font-size:10px}.event-side{padding:4px}.type{font-size:9px}.meta{font-size:12px}.foot{font-size:9px}}
 </style>
 </head>
 <body>
@@ -180,13 +180,21 @@ if(q.get('preview')==='1')demo();else{update();setInterval(update,refresh*1000)}
   const requestedScale = queryNumber('scale', 1, 0.5, 2.5);
   const offsetXValue = Number.isFinite(Number(sizeParams.get('offsetX'))) ? Number(sizeParams.get('offsetX') || 0) : 0;
   const offsetYValue = Number.isFinite(Number(sizeParams.get('offsetY'))) ? Number(sizeParams.get('offsetY') || 0) : 0;
+  /* 'top' is an absolute pixel position from the top of the browser source.
+     If omitted, keep the intended 30px top margin; offsetY remains a relative fallback. */
+  const rawTop = sizeParams.has('top') ? String(sizeParams.get('top') || '').trim() : '';
+  const requestedTop = rawTop !== '' && Number.isFinite(Number(rawTop))
+    ? clamp(Number(rawTop), 0, 2160)
+    : null;
+  const topPosition = requestedTop !== null ? requestedTop : Math.max(0, 30 + offsetYValue);
   const root = document.documentElement;
   root.style.setProperty('--gfx-width', targetWidth + 'px');
   sizeStage.style.width = targetWidth + 'px';
   sizeStage.style.maxWidth = 'none';
-  /* Position is explicit so it is consistent at desktop and mobile viewport sizes. */
+  /* Set the absolute position inline so CSS defaults/media rules cannot override it. */
+  sizeStage.style.position = 'fixed';
   sizeStage.style.left = 'calc(50% + ' + offsetXValue + 'px)';
-  sizeStage.style.top = Math.max(8, 8 + offsetYValue) + 'px';
+  sizeStage.style.top = topPosition + 'px';
 
   let debugBox = null;
   if (sizeParams.get('debug') === '1') {
@@ -198,7 +206,7 @@ if(q.get('preview')==='1')demo();else{update();setInterval(update,refresh*1000)}
     const naturalHeight = sizeStage.offsetHeight;
     if (!naturalHeight) return;
 
-    const top = Math.max(8, 8 + offsetYValue);
+    const top = topPosition;
     const centerX = window.innerWidth / 2 + offsetXValue;
     const availableLeft = Math.max(0, centerX - 8);
     const availableRight = Math.max(0, window.innerWidth - 8 - centerX);
@@ -219,7 +227,7 @@ if(q.get('preview')==='1')demo();else{update();setInterval(update,refresh*1000)}
 
     if (debugBox) {
       const r = sizeStage.getBoundingClientRect();
-      debugBox.textContent = 'KOKOSÄÄDÖT / AUTOSOVITUS\nwidth=' + targetWidth + ' px\nheight=' + (requestedHeight === null ? 'auto (' + Math.round(naturalHeight) + ' px)' : requestedHeight + ' px') + '\nscale=' + requestedScale + '\nautoFit=' + autoFit.toFixed(3) + '\nNäkyvä laatikko: ' + Math.round(r.width) + ' × ' + Math.round(r.height) + ' px';
+      debugBox.textContent = 'KOKOSÄÄDÖT / AUTOSOVITUS\ntop=' + topPosition + ' px\nwidth=' + targetWidth + ' px\nheight=' + (requestedHeight === null ? 'auto (' + Math.round(naturalHeight) + ' px)' : requestedHeight + ' px') + '\nscale=' + requestedScale + '\nautoFit=' + autoFit.toFixed(3) + '\nSijainti ruudulla: X=' + Math.round(r.left) + ', Y=' + Math.round(r.top) + '\nNäkyvä koko: ' + Math.round(r.width) + ' × ' + Math.round(r.height) + ' px';
     }
   }
   if ('ResizeObserver' in window) {

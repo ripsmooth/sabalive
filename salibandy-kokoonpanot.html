@@ -64,42 +64,81 @@ async function update(){try{const m=await getMatch(),t=teamFields(m);setLogo('lo
 startVisibility('lineups',false);update();setInterval(update,refresh*1000);
 </script>
 <script>
-/* Kokoonpanot keskelle ruutua. Oletusleveys 840 px (-40 %); pelaajanimet 17 px. width/height/scale säilyvät URL-säätiminä. */
+/* Kokoonpanot keskelle ruutua. Oletusleveys 840 px (-40 %); pelaajanimet 17 px.
+   Jos kumpi tahansa kokoonpano on pitkä, skaalataan KOKO grafiikkaa tasaisesti
+   niin, että kaikki pelaajarivit mahtuvat selainlähteeseen. */
 (function applyLineupDimensions(){
   const params=new URLSearchParams(window.location.search);
   const stage=document.querySelector('.stage');
   if(!stage)return;
   const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
-  const read=(key,fallback,min,max)=>{if(!params.has(key))return fallback;const n=Number(params.get(key));return Number.isFinite(n)&&n>0?clamp(n,min,max):fallback};
+  const read=(key,fallback,min,max)=>{
+    if(!params.has(key))return fallback;
+    const raw=String(params.get(key)||'').trim();
+    const n=Number(raw);
+    return raw!==''&&Number.isFinite(n)&&n>0?clamp(n,min,max):fallback;
+  };
   const baseWidth=read('width',840,240,2400);
-  const requestedHeight=params.has('height')?read('height',null,40,2160):null;
+  const requestedHeight=read('height',null,40,2160);
   const preferredScale=read('scale',1,0.5,2.5);
-  const offsetX=params.has('offsetX')&&Number.isFinite(Number(params.get('offsetX')))?Number(params.get('offsetX')):0;
-  const offsetY=params.has('offsetY')&&Number.isFinite(Number(params.get('offsetY')))?Number(params.get('offsetY')):0;
+  const offsetXRaw=String(params.get('offsetX')||'').trim();
+  const offsetYRaw=String(params.get('offsetY')||'').trim();
+  const offsetX=offsetXRaw!==''&&Number.isFinite(Number(offsetXRaw))?Number(offsetXRaw):0;
+  const offsetY=offsetYRaw!==''&&Number.isFinite(Number(offsetYRaw))?Number(offsetYRaw):0;
   const root=document.documentElement;
   root.style.setProperty('--gfx-width',baseWidth+'px');
   root.style.setProperty('--offset-x',offsetX+'px');
   root.style.setProperty('--offset-y',offsetY+'px');
-  stage.style.width=baseWidth+'px';stage.style.maxWidth='none';
+  stage.style.width=baseWidth+'px';
+  stage.style.maxWidth='none';
+
   let debugBox=null;
   if(params.get('debug')==='1'){
     debugBox=document.createElement('div');
     debugBox.style.cssText='position:fixed;right:8px;bottom:8px;z-index:2147483647;background:rgba(16,24,32,.96);border:1px solid #e8c547;color:#fff;padding:7px 9px;font:12px/1.45 Arial,sans-serif;pointer-events:none;white-space:pre-line';
     document.body.appendChild(debugBox);
   }
-  function fit(){
-    const w=stage.offsetWidth,h=stage.offsetHeight;if(!w||!h)return;
-    const yFactor=requestedHeight===null?1:requestedHeight/h;
-    const desiredW=w*preferredScale,desiredH=h*preferredScale*yFactor;
-    const availableW=Math.max(120,window.innerWidth-32-Math.abs(offsetX)*2);
-    const availableH=Math.max(120,window.innerHeight-32-Math.abs(offsetY)*2);
-    const autoFit=Math.min(1,availableW/desiredW,availableH/desiredH);
-    const sx=preferredScale*autoFit,sy=preferredScale*yFactor*autoFit;
-    root.style.setProperty('--scale',String(sx));root.style.setProperty('--scale-y',String(sy));
-    if(debugBox){const r=stage.getBoundingClientRect();debugBox.textContent='KOKOONPANOT\nLeveys: '+baseWidth+' px\nSisällön korkeus: '+Math.round(h)+' px\nSkaala: '+sx.toFixed(3)+' × '+sy.toFixed(3)+'\nNäkyvä koko: '+Math.round(r.width)+' × '+Math.round(r.height)+' px'}
+  let scheduled=false;
+  function scheduleFit(){
+    if(scheduled)return;
+    scheduled=true;
+    requestAnimationFrame(()=>{scheduled=false;fit()});
   }
-  if('ResizeObserver'in window){const ro=new ResizeObserver(()=>requestAnimationFrame(fit));ro.observe(stage)}
-  window.addEventListener('resize',fit);requestAnimationFrame(fit);
+  function fit(){
+    /* scrollHeight includes all player rows, even if their total exceeds viewport height. */
+    const w=Math.max(stage.offsetWidth,stage.scrollWidth);
+    const h=Math.max(stage.offsetHeight,stage.scrollHeight);
+    if(!w||!h)return;
+    const yFactor=requestedHeight===null?1:requestedHeight/h;
+    const desiredW=w*preferredScale;
+    const desiredH=h*preferredScale*yFactor;
+    const availableW=Math.max(1,window.innerWidth-32-Math.abs(offsetX)*2);
+    const availableH=Math.max(1,window.innerHeight-32-Math.abs(offsetY)*2);
+    /* Fit only by shrinking; never enlarge automatically. Same additional factor
+       is applied to both axes so the graphic's original proportions are preserved. */
+    const autoFit=Math.max(0.001,Math.min(1,availableW/desiredW,availableH/desiredH));
+    const sx=preferredScale*autoFit;
+    const sy=preferredScale*yFactor*autoFit;
+    root.style.setProperty('--scale',String(sx));
+    root.style.setProperty('--scale-y',String(sy));
+    if(debugBox){
+      const r=stage.getBoundingClientRect();
+      debugBox.textContent='KOKOONPANOT / AUTOSOVITUS\nLeveys: '+baseWidth+' px\nSisällön korkeus: '+Math.round(h)+' px\nAutomaattinen sovitus: '+autoFit.toFixed(3)+'\nSkaala: '+sx.toFixed(3)+' × '+sy.toFixed(3)+'\nNäkyvä koko: '+Math.round(r.width)+' × '+Math.round(r.height)+' px';
+    }
+  }
+  if('ResizeObserver'in window){
+    const ro=new ResizeObserver(scheduleFit);
+    ro.observe(stage);
+  }
+  /* Also catches replacement of player rows after each API refresh. */
+  if('MutationObserver'in window){
+    const mo=new MutationObserver(scheduleFit);
+    mo.observe(stage,{childList:true,subtree:true,characterData:true});
+  }
+  window.addEventListener('resize',scheduleFit);
+  window.addEventListener('orientationchange',scheduleFit);
+  if(window.visualViewport)window.visualViewport.addEventListener('resize',scheduleFit);
+  requestAnimationFrame(scheduleFit);
 })();
 </script>
 </body></html>
