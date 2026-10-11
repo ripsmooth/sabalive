@@ -78,3 +78,16 @@ Lisää Vercel-projektin **Settings → Environment Variables** -kohtaan:
 Lisää muuttujat Production-ympäristöön (ja halutessasi Previewyn) ja tee Vercelissä uusi deployment. Älä koskaan lisää GitHub-tokenia HTML-tiedostoon tai julkaise sitä GitHubissa. Index-sivun salasana lähetetään vain palvelinreitille; se ei tallennu selaimeen. Ensimmäisellä tallennuksella API luo GitHubiin `config/salibandy-default-match.json`-tiedoston automaattisesti.
 
 Jos API näyttää virheen 503, jokin yllä olevista ympäristömuuttujista puuttuu. Jos tallennus epäonnistuu oikeusvirheeseen, tarkista että tokenilla on kyseiseen repositoryyn Contents read/write -oikeus.
+
+
+## Tulostaulun eränäyttö (valinnainen)
+
+Tulostaulun tavallinen sekuntikello toimii ennallaan, kun URL-osoitteessa ei ole eränäytön parametreja. Jos haluat kellon paikalle erätunnuksen, lisää `clockmode=period` ja `period`-arvo:
+
+- `salibandy-tulostaulu.html?clockmode=period&period=1` → `1. ERÄ`
+- `salibandy-tulostaulu.html?clockmode=period&period=2` → `2. ERÄ`
+- `salibandy-tulostaulu.html?clockmode=period&period=3` → `3. ERÄ`
+- `salibandy-tulostaulu.html?clockmode=period&period=JA` → `JA` (jatkoaika)
+- `salibandy-tulostaulu.html?clockmode=period&period=RL` → `RL` (rangaistuslaukaukset)
+
+Tämä parametri on tarkoitettu tulostaulun kellon paikalle tulevaan erämerkintään. Se ei muuta varsinaisen ottelukellon toimintaa muissa URL-osoitteissa. Eräarvo annetaan URL:ssa, joten lähetysohjaaja voi vaihtaa sen tarpeen mukaan. `match_id`, `scale`, `refresh` ja muut aiemmat parametrit toimivat edelleen yhdessä tämän kanssa.
