@@ -36,9 +36,7 @@ body.gfx-hidden .gfx{opacity:0;pointer-events:none}
 </div></div><div id="error" class="err hidden"></div>
 <script>
 const q=new URLSearchParams(location.search);
-let matchId=q.get('match_id')||q.get('ottelu')||'';
-let defaultMatchPromise=null;
-async function ensureMatchId(){if(matchId)return matchId;if(!defaultMatchPromise)defaultMatchPromise=fetch('/api/salibandy-default-match',{cache:'no-store'}).then(r=>r.json()).then(d=>{matchId=String(d.match_id||'953141');return matchId}).catch(()=>{matchId='953141';return matchId});return defaultMatchPromise;}
+const matchId=q.get('match_id')||q.get('ottelu')||'953141';
 const refresh=Math.max(3,Math.min(60,Number(q.get('refresh')||3)));
 const scale=Math.max(.5,Math.min(2.5,Number(q.get('scale')||1)));
 const width=Math.max(500,Math.min(1920,Number(q.get('width')||1400)));
@@ -46,7 +44,7 @@ document.documentElement.style.setProperty('--scale',scale);
 document.documentElement.style.setProperty('--gfx-width',width+'px');
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-async function getMatch(){await ensureMatchId();const u=new URL('/api/salibandy-match',location.origin);u.searchParams.set('match_id',matchId);u.searchParams.set('timeStamp',Date.now());return fetch(u,{cache:'no-store'}).then(async r=>{const d=await r.json();if(!r.ok)throw Error(d?.error||('API vastasi '+r.status));if(d.call?.status&&d.call.status!=='ok')throw Error('TorneoPal: '+d.call.status);if(!d.match)throw Error('Ottelutietoja ei löytynyt.');return d.match})}
+function getMatch(){const u=new URL('/api/salibandy-match',location.origin);u.searchParams.set('match_id',matchId);u.searchParams.set('timeStamp',Date.now());return fetch(u,{cache:'no-store'}).then(async r=>{const d=await r.json();if(!r.ok)throw Error(d?.error||('API vastasi '+r.status));if(d.call?.status&&d.call.status!=='ok')throw Error('TorneoPal: '+d.call.status);if(!d.match)throw Error('Ottelutietoja ei löytynyt.');return d.match})}
 function setText(id,value){const e=$(id);if(e)e.textContent=value??''}
 function setLogo(id,url,name){const e=$(id);if(!e)return;e.innerHTML='';if(url&&/^https?:\/\//i.test(url)){const im=document.createElement('img');im.className='logo';im.src=url;im.alt='';im.onerror=()=>fallback();e.className='';e.appendChild(im);function fallback(){e.className='fallback';e.textContent=(name||'?').slice(0,2).toUpperCase()}}else{e.className='fallback';e.textContent=(name||'?').slice(0,2).toUpperCase()}}
 function teamFields(m){return {a:{id:String(m.team_A_id||''),name:m.team_A_name||m.club_A_name||'KOTI',logo:m.club_A_crest||m.team_A_crest||''},b:{id:String(m.team_B_id||''),name:m.team_B_name||m.club_B_name||'VIERAS',logo:m.club_B_crest||m.team_B_crest||''}}}
@@ -64,9 +62,28 @@ function calcStats(m){
  for(const g of goals){const side=sideFor(g.team_id);if(side)out[side].goals++;}
  for(const p of players){const side=sideFor(p.team_id);if(side)out[side].saves+=Number(p.saves)||0;}
  for(const b of bookings){const side=sideFor(b.team_id);if(!side)continue;const code=String(b.code||'').toLowerCase(),fi=String(b.code_fi||'').toLowerCase();if(/^\d+\s*min/.test(code)||/^\d+\s*min/.test(fi))out[side].penalties++;}
- // TorneoPalin tämän otteludatan maalitapahtumissa ei välttämättä ole ylivoima-/alivoimatietoa.
- // Näytetään nolla vain silloin, kun tapahtumissa ei ole luotettavaa tilatietoa; ulkoasua ei muuteta.
- for(const g of goals){const side=sideFor(g.team_id);if(!side)continue;const desc=String([g.description,g.description_text,g.code,g.code_fi,g.code_en].filter(Boolean).join(' ')).toLowerCase();if(/ylivoima|power.?play|man.?advantage/.test(desc))out[side].powerplay++;if(/alivoima|short.?handed|man.?down/.test(desc))out[side].shorthanded++;}
+ // TÄRKEÄ: match.goals on pelkkä yhteenvetolista, jossa description on usein vain tulos
+ // (esim. "3-8"). Maalin lisämerkinnät YV/AV tulevat varsinaisista match.events-tapahtumista.
+ // Käytetään eventtejä ensin ja luetaan merkintä niistä tekstikentistä, joissa TorneoPal voi
+ // säilyttää tapahtuman selitteen. Näin YV2/AV2 lasketaan samaan tilastoluokkaan kuin YV/AV.
+ const events=Array.isArray(m.events)?m.events:[];
+ const eventGoals=events.filter(e=>['maali','goal'].includes(String(e.code||'').trim().toLowerCase()));
+ const markedGoals=eventGoals.length?eventGoals:goals;
+ const isMark=(text,kind)=>{
+   const v=String(text||'').toUpperCase();
+   if(kind==='YV') return /(^|[^A-Z0-9])YV2?(?=$|[^A-Z0-9])/.test(v)||/YLIVOIMA|POWER.?PLAY|MAN.?ADVANTAGE/.test(v);
+   return /(^|[^A-Z0-9])AV2?(?=$|[^A-Z0-9])/.test(v)||/ALIVOIMA|SHORT.?HANDED|MAN.?DOWN/.test(v);
+ };
+ for(const g of markedGoals){
+   const side=sideFor(g.team_id);if(!side)continue;
+   // Kenttien nimet voivat vaihdella API-versioittain. Otetaan mukaan vain selitteeseen/
+   // maalityyppiin viittaavat kentät, eikä esimerkiksi pelaajan nimeä tai tuloslukemia.
+   const text=Object.entries(g).filter(([k,v])=>typeof v==='string'||typeof v==='number')
+     .filter(([k])=>/(code|desc|note|text|goal|mark|label|extra|annot|comment|type|variant|reason)/i.test(k))
+     .map(([,v])=>String(v)).join(' ');
+   if(isMark(text,'YV'))out[side].powerplay++;
+   if(isMark(text,'AV'))out[side].shorthanded++;
+ }
  return out;
 }
 async function update(){try{const m=await getMatch(),t=teamFields(m),st=calcStats(m);setLogo('logoA',t.a.logo,t.a.name);setLogo('logoB',t.b.logo,t.b.name);setText('teamAName',t.a.name);setText('teamBName',t.b.name);for(const side of ['A','B']){const x=st[side];setText('goals'+side,x.goals);setText('powerplay'+side,x.powerplay);setText('shorthanded'+side,x.shorthanded);setText('saves'+side,x.saves);setText('penalties'+side,x.penalties)}clearError()}catch(e){showError(e)}}
