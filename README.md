@@ -56,3 +56,8 @@ Lisää muuttujat Vercelin Project Settings → Environment Variables -osiossa j
 ## Grafiikoiden oletusnäkyvyys
 
 Tulostaulu, tilastot, Lower Third ja kokoonpanot näkyvät oletuksena heti, eikä niiden näkyvyys riipu etäohjauksen/Upstashin asetuksista. Etäohjaus ja sen API-tiedostot ovat edelleen mukana paketissa valinnaista käyttöönottoa varten. Jos haluat yksittäisen grafiikan näkyvyyden etäohjauksen alaisuuteen, lisää sen URL-osoitteeseen `&remote=1` (tai jos URL:ssa ei ole kysymysmerkkiä, `?remote=1`). Ilman tätä parametria grafiikka pysyy päällä.
+
+
+## Reaaliaikainen pelikello
+
+Tulostaulun kello päivittyy neljä kertaa sekunnissa viimeisimmän TorneoPal-otteludatan perusteella. Kun `live_timer_on` on päällä, kello jatkaa sekuntien laskemista kyselyiden välissä. Kun kellon käyntitila on pois päältä, aika pysähtyy. Jokainen uusi API-vastaus synkronoi kellon uudelleen. Tämä edellyttää, että tulospalvelu toimittaa `live_time_mmss` tai `live_time` sekä `live_timer_on`-kentät.
