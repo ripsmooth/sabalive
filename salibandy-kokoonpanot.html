@@ -1,6 +1,6 @@
 <!doctype html><html lang="fi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Salibandy · Kokoonpanot</title><style>
 
-:root{--ink:#101820;--panel:#1b2a35;--accent:#e8c547;--white:#fff;--muted:#bdc7d0;--scale:1;--gfx-width:1400px}
+:root{--ink:#101820;--panel:#1b2a35;--accent:#e8c547;--white:#fff;--muted:#bdc7d0;--scale:1;--gfx-width:840px}
 *{box-sizing:border-box}
 html,body{margin:0;width:100%;height:100%;background:transparent;overflow:hidden}
 body{font-family:Arial,Helvetica,sans-serif;color:var(--white);font-variant-numeric:tabular-nums}
@@ -24,10 +24,10 @@ body.gfx-hidden .gfx{opacity:0;pointer-events:none}
 .players{padding:7px 14px 12px;display:grid;grid-template-columns:minmax(0,1fr);gap:0}
 .player{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:8px;align-items:center;min-height:30px;border-bottom:1px solid #34434d;padding:2px 1px}
 .number{display:flex;justify-content:center;align-items:center;background:var(--accent);color:var(--ink);font-size:15px;font-weight:900;min-height:25px;clip-path:polygon(0 0,100% 0,86% 100%,0 100%)}
-.pname{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pname{font-size:18.2px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tag{color:var(--accent);font-size:10px;font-weight:900;white-space:nowrap}
 .empty{padding:18px;color:var(--muted);font-size:14px}
-@media(max-width:750px){.header{height:82px;grid-template-columns:minmax(0,1fr) 110px minmax(0,1fr)}.team{gap:8px;padding:7px}.logo,.fallback{width:43px;height:43px;flex-basis:43px}.teamname{font-size:13px}.mid{font-size:15px}.players{grid-template-columns:minmax(0,1fr);padding:5px}.pname{font-size:12px}.player{grid-template-columns:30px minmax(0,1fr) auto}.number{font-size:12px}}
+@media(max-width:750px){.header{height:82px;grid-template-columns:minmax(0,1fr) 110px minmax(0,1fr)}.team{gap:8px;padding:7px}.logo,.fallback{width:43px;height:43px;flex-basis:43px}.teamname{font-size:13px}.mid{font-size:15px}.players{grid-template-columns:minmax(0,1fr);padding:5px}.pname{font-size:15.6px}.player{grid-template-columns:30px minmax(0,1fr) auto}.number{font-size:12px}}
 </style></head><body><div class="gfx stage">
 <div class="header"><div class="team"><div id="logoA" class="fallback">A</div><div id="teamAName" class="teamname">KOTI</div></div><div class="mid">KOKOONPANOT</div><div class="team b"><div id="teamBName" class="teamname">VIERAS</div><div id="logoB" class="fallback">B</div></div></div>
 <div class="cols"><section class="roster"><div class="roster-title"><span id="titleA">KOTI</span><span id="countA">PELAAJAT</span></div><div id="playersA" class="players"></div><div id="emptyA" class="empty hidden">Kokoonpanoa ei ole julkaistu.</div></section><section class="roster"><div class="roster-title"><span id="titleB">VIERAS</span><span id="countB">PELAAJAT</span></div><div id="playersB" class="players"></div><div id="emptyB" class="empty hidden">Kokoonpanoa ei ole julkaistu.</div></section></div>
@@ -38,10 +38,10 @@ let matchId=q.get('match_id')||q.get('ottelu')||'';
 let defaultMatchPromise=null;
 async function ensureMatchId(){if(matchId)return matchId;if(!defaultMatchPromise)defaultMatchPromise=fetch('/api/salibandy-default-match',{cache:'no-store'}).then(r=>r.json()).then(d=>{matchId=String(d.match_id||'953141');return matchId}).catch(()=>{matchId='953141';return matchId});return defaultMatchPromise;}
 const refresh=Math.max(3,Math.min(60,Number(q.get('refresh')||3)));
-const offsetX=Number.isFinite(Number(q.get('offsetX')))?Number(q.get('offsetX')):0;
-const offsetY=Number.isFinite(Number(q.get('offsetY')))?Number(q.get('offsetY')):0;
+const offsetX=q.has('offsetX')&&String(q.get('offsetX')).trim()!==''&&Number.isFinite(Number(q.get('offsetX')))?Number(q.get('offsetX')):0;
+const offsetY=q.has('offsetY')&&String(q.get('offsetY')).trim()!==''&&Number.isFinite(Number(q.get('offsetY')))?Number(q.get('offsetY')):0;
 const scale=Math.max(.5,Math.min(2.5,Number(q.get('scale')||1)));
-const width=Math.max(500,Math.min(1920,Number(q.get('width')||1400)));
+const width=Math.max(240,Math.min(2400,Number(q.get('width')||840)));
 document.documentElement.style.setProperty('--offset-x',offsetX+'px');
 document.documentElement.style.setProperty('--offset-y',offsetY+'px');
 document.documentElement.style.setProperty('--scale',scale);
@@ -64,14 +64,14 @@ async function update(){try{const m=await getMatch(),t=teamFields(m);setLogo('lo
 startVisibility('lineups',false);update();setInterval(update,refresh*1000);
 </script>
 <script>
-/* Kokoonpanot keskelle ruutua; width/height/scale säilyvät URL-säätiminä. */
+/* Kokoonpanot keskelle ruutua. Oletusleveys 840 px (-40 %); pelaajanimet +30 %. width/height/scale säilyvät URL-säätiminä. */
 (function applyLineupDimensions(){
   const params=new URLSearchParams(window.location.search);
   const stage=document.querySelector('.stage');
   if(!stage)return;
   const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
   const read=(key,fallback,min,max)=>{if(!params.has(key))return fallback;const n=Number(params.get(key));return Number.isFinite(n)&&n>0?clamp(n,min,max):fallback};
-  const baseWidth=read('width',1400,240,2400);
+  const baseWidth=read('width',840,240,2400);
   const requestedHeight=params.has('height')?read('height',null,40,2160):null;
   const preferredScale=read('scale',1,0.5,2.5);
   const offsetX=params.has('offsetX')&&Number.isFinite(Number(params.get('offsetX')))?Number(params.get('offsetX')):0;

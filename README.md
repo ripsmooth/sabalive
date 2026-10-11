@@ -150,7 +150,7 @@ Esimerkki: `salibandy-tulostaulu.html?width=650&height=90&offsetX=50&offsetY=40`
 
 Esikatseluun voi lisätä `debug=1`, jolloin sivun oikeaan alakulmaan tulee näkyvien mittojen diagnostiikka.
 
-Oletusleveydet: tulostaulu 575 px; tehopelaajat 575 px; tilastot 1400 px; Lower Third 1400 px; ottelun tapahtumat 1200 px; kokoonpanot 1400 px; sarjataulukko 1100 px. Korkeus on oletuksena automaattinen ja riippuu näkymän sisällöstä.
+Oletusleveydet: tulostaulu 575 px; tehopelaajat 575 px; tilastot 1400 px; Lower Third 1400 px; ottelun tapahtumat 1200 px; kokoonpanot 840 px; sarjataulukko 1100 px. Korkeus on oletuksena automaattinen ja riippuu näkymän sisällöstä.
 
 
 ## Viimeisimmät ulkoasumuutokset
@@ -165,3 +165,17 @@ Oletusleveydet: tulostaulu 575 px; tehopelaajat 575 px; tilastot 1400 px; Lower 
 - Tulostaulu: oletussiirrot `offsetX=40`, `offsetY=30`.
 - Vierasjoukkueen nimi on kohdistettu oman nimilaatikkonsa ulkoreunaan oikealle.
 - Tehopelaajat: oletussiirrot `offsetX=40`, `offsetY=90`, eli tulostaulun 54 px korkean rivin ja 6 px välin alle.
+
+
+## Uusimmat korjaukset (kokoonpanot ja sijoittelu)
+- Kokoonpanot-grafiikan oletusleveys on 840 px (aiemman 1400 px sijasta, eli 40 % kapeampi). Jos osoitteessa annetaan `width=`, se korvaa oletuksen.
+- Kokoonpanon pelaajanimet ovat 18,2 px (aiemmin 14 px) ja kapealla näkymällä 15,6 px (aiemmin 12 px), eli 30 % suuremmat molemmissa tapauksissa.
+- Tulostaulun offset-oletus on X=40 px, Y=30 px. Tehopelaajien oletus on X=40 px, Y=90 px, eli 6 px tulostaulurivin (54 px) alapuolella, kun tulostaulun Y=30 px.
+- Korjattu URL-parametrien lukeminen: puuttuva `offsetX`/`offsetY` ei enää muutu vahingossa nollaksi JavaScriptin `Number(null)`-muunnoksen takia. Annettu arvo, myös nolla, toimii edelleen yliajona.
+
+
+## Korjaus: kokoonpanojen mitat ja oletussijainnit
+- Kokoonpanosivun oletusleveys on 840 px. Tämä arvo on päivitetty sekä CSS:n alkuarvoon että sivun myöhemmin suorittamaan mitoitusskriptiin, joka aiemmassa paketissa palautti leveyden 1400 pikseliin. Ohjauspaneeli luo kokoonpanoille nyt myös URLin, jossa `width=840`, jos käyttäjä ei anna yleistä leveysarvoa.
+- Pelaajien nimitekstit ovat 18,2 px normaalissa näkymässä (14 px × 1,3) ja 15,6 px kapeassa näkymässä (12 px × 1,3).
+- Tulostaulun oletussiirto ilman URL-parametreja on X=40 px, Y=30 px. Tehopelaajien oletussiirto on X=40 px, Y=90 px. Korjaus estää `Number(null)`-muunnosta muuttamasta puuttuvaa parametria nollaksi.
+- Huomaa: jos OBS:n vanha selainlähteen URL sisältää nimenomaan `width=1400` tai `offsetX=0&offsetY=0`, nuo eksplisiittiset arvot ohittavat oletukset. Päivitä URL ohjauspaneelista tai poista/korvaa vanhat parametrit.
