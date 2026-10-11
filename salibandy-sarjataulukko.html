@@ -34,7 +34,7 @@ tbody tr.featured{background:#263b48;box-shadow:inset 4px 0 0 var(--accent)}
  <div class="note" id="note">Tiedot haetaan ottelun sarjan TorneoPal-datasta.</div>
 </div><div id="error" class="err hidden"></div>
 <script>
-const q=new URLSearchParams(location.search),matchId=q.get('match_id')||q.get('ottelu')||'953141';
+const q=new URLSearchParams(location.search);let matchId=q.get('match_id')||q.get('ottelu')||'';let defaultMatchPromise=null;async function ensureMatchId(){if(matchId)return matchId;if(!defaultMatchPromise)defaultMatchPromise=fetch('/api/salibandy-default-match',{cache:'no-store'}).then(r=>r.json()).then(d=>{matchId=String(d.match_id||'953141');return matchId}).catch(()=>{matchId='953141';return matchId});return defaultMatchPromise;}
 const scale=Math.max(.5,Math.min(2.5,Number(q.get('scale')||1))),width=Math.max(500,Math.min(1920,Number(q.get('width')||1100)));
 document.documentElement.style.setProperty('--scale',scale);document.documentElement.style.setProperty('--gfx-width',width+'px');
 const $=id=>document.getElementById(id);
@@ -71,6 +71,6 @@ function render(data){
  $('note').textContent='Ottelun joukkueet on korostettu keltaisella reunuksella. Tiedot: TorneoPal.';
  $('error').classList.add('hidden');
 }
-async function update(){try{const u=new URL('/api/salibandy-standings',location.origin);u.searchParams.set('match_id',matchId);u.searchParams.set('timeStamp',Date.now());const r=await fetch(u,{cache:'no-store'});const d=await r.json();if(!r.ok)throw Error(d.error||'Sarjataulukon haku epäonnistui.');render(d)}catch(e){$('error').textContent='Sarjataulukko: '+(e.message||e);$('error').classList.remove('hidden')}}
+async function update(){try{await ensureMatchId();const u=new URL('/api/salibandy-standings',location.origin);u.searchParams.set('match_id',matchId);u.searchParams.set('timeStamp',Date.now());const r=await fetch(u,{cache:'no-store'});const d=await r.json();if(!r.ok)throw Error(d.error||'Sarjataulukon haku epäonnistui.');render(d)}catch(e){$('error').textContent='Sarjataulukko: '+(e.message||e);$('error').classList.remove('hidden')}}
 update();setInterval(update,30000);
 </script></body></html>

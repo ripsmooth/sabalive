@@ -63,3 +63,18 @@ Tulostaulu, tilastot, Lower Third ja kokoonpanot näkyvät oletuksena heti, eik�
 ## Reaaliaikainen pelikello
 
 Tulostaulun kello päivittyy neljä kertaa sekunnissa viimeisimmän TorneoPal-otteludatan perusteella. Kun `live_timer_on` on päällä, kello jatkaa sekuntien laskemista kyselyiden välissä. Kun kellon käyntitila on pois päältä, aika pysähtyy. Jokainen uusi API-vastaus synkronoi kellon uudelleen. Tämä edellyttää, että tulospalvelu toimittaa `live_time_mmss` tai `live_time` sekä `live_timer_on`-kentät.
+
+
+## Palvelimelle tallennettava oletusottelu (GitHub + Vercel)
+
+Oletusottelu tallennetaan GitHub-repositorion tiedostoon `config/salibandy-default-match.json` Vercelin API-reitin kautta. Grafiikat, joiden URL-osoitteessa ei ole `?match_id=...`, lukevat oletuksen palvelimelta. Suora `?match_id=...` ohittaa oletuksen.
+
+Lisää Vercel-projektin **Settings → Environment Variables** -kohtaan:
+
+- `GITHUB_TOKEN`: GitHub fine-grained personal access token, jolla on vain tähän repositoryyn **Contents: Read and write** -oikeus.
+- `GITHUB_REPOSITORY`: repository muodossa `omistaja/reponimi` (esim. `oma-tunnus/SALIBANDY-TV`).
+- `DEFAULT_MATCH_CONTROL_PASSWORD`: pitkä salasana, jota kysytään index-sivun oletusottelun tallennuksessa.
+
+Lisää muuttujat Production-ympäristöön (ja halutessasi Previewyn) ja tee Vercelissä uusi deployment. Älä koskaan lisää GitHub-tokenia HTML-tiedostoon tai julkaise sitä GitHubissa. Index-sivun salasana lähetetään vain palvelinreitille; se ei tallennu selaimeen. Ensimmäisellä tallennuksella API luo GitHubiin `config/salibandy-default-match.json`-tiedoston automaattisesti.
+
+Jos API näyttää virheen 503, jokin yllä olevista ympäristömuuttujista puuttuu. Jos tallennus epäonnistuu oikeusvirheeseen, tarkista että tokenilla on kyseiseen repositoryyn Contents read/write -oikeus.
