@@ -16,7 +16,7 @@ body.gfx-hidden .gfx{opacity:0;pointer-events:none}
 .scorebug{width:100%;height:54px;display:grid;grid-template-columns:minmax(0,1fr) 106px minmax(0,1fr) 70px;background:var(--ink);overflow:hidden}
 .team{min-width:0;display:flex;align-items:center;gap:7px;padding:4px 7px;background:#141d25}
 /* Vierasjoukkue: nimi ensin, logo aivan oman lohkon oikeaan reunaan. */
-.team.b{flex-direction:row;justify-content:space-between;text-align:left}
+.team.b{flex-direction:row-reverse;justify-content:space-between;text-align:right}
 .logo{width:45px;height:45px;flex:0 0 45px}
 .fallback{width:45px;height:45px;font-size:15px}
 .team-name{font-size:15px;font-weight:900;line-height:1.05;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
@@ -77,8 +77,8 @@ function periodLabel(m){
  if(n>regularCount+extraCount)return 'RL';
  return '';
 }
-const offsetX=Number.isFinite(Number(q.get('offsetX')))?Number(q.get('offsetX')):50;
-const offsetY=Number.isFinite(Number(q.get('offsetY')))?Number(q.get('offsetY')):40;
+const offsetX=Number.isFinite(Number(q.get('offsetX')))?Number(q.get('offsetX')):40;
+const offsetY=Number.isFinite(Number(q.get('offsetY')))?Number(q.get('offsetY')):30;
 const scale=Math.max(.5,Math.min(2.5,Number(q.get('scale')||1)));
 const width=Math.max(500,Math.min(1920,Number(q.get('width')||1400)));
 document.documentElement.style.setProperty('--offset-x',offsetX+'px');

@@ -158,3 +158,10 @@ Oletusleveydet: tulostaulu 575 px; tehopelaajat 575 px; tilastot 1400 px; Lower 
 - Sarjataulukko käyttää nyt 1,5-kertaista oletusskaalaa ja keskitetään sekä vaaka- että pystysuunnassa. Jos taulukko ei mahdu näyttöön, skaala pienenee automaattisesti koko taulukon mittasuhteet säilyttäen. `width=`, `height=`, `scale=`, `offsetX=`, `offsetY=` ja `debug=1` ovat edelleen käytettävissä.
 - Tulostaulun pelikellossa ottelun päättymismerkintä on `LT` (ei enää `LOPPUTULOS`).
 - Kokoonpanot-sivulla jokaisen joukkueen pelaajat näytetään yhdessä pystysarakkeessa. Grafiikka keskitetään näytön keskelle ja skaalataan tarvittaessa niin, että sisältö mahtuu ruutuun.
+
+
+## Viimeisimmät layout-muutokset
+- Kokoonpanot: oletusleveys 840 px (aiempi 1400 px, noin 40 % kapeampi) ja pelaajien nimiteksti 18,2 px (+30 % aiemmasta 14 px:stä). Grafiikka pysyy keskitettynä.
+- Tulostaulu: oletussiirrot `offsetX=40`, `offsetY=30`.
+- Vierasjoukkueen nimi on kohdistettu oman nimilaatikkonsa ulkoreunaan oikealle.
+- Tehopelaajat: oletussiirrot `offsetX=40`, `offsetY=90`, eli tulostaulun 54 px korkean rivin ja 6 px välin alle.
