@@ -11,6 +11,7 @@ Tämä on **täysin erillinen GitHub/Vercel-projekti** salibandyn lähetysgrafii
 - `salibandy-sarjataulukko.html` – ottelun sarjan sarjataulukko
 - `api/salibandy-standings.js` – ottelun sarjan ja lohkon sarjataulukon haku TorneoPalista
 - `salibandy-kokoonpanot.html` – joukkueiden kokoonpanot
+- `salibandy-otteluntapahtumat.html` – kaikki maalit, rangaistukset ja aikalisät aikajärjestyksessä
 - `salibandy-grafiikkaohjaus.html` – grafiikoiden ohjauspaneeli
 - `api/salibandy-match.js` – ottelutiedot Salibandyliiton TorneoPal-rajapinnasta
 - `api/salibandy-graphics-state.js` – etäohjauksen näkyvyystila
@@ -112,3 +113,15 @@ Jos rajapinta ei palauta voimassa olevaa erätietoa, grafiikka näyttää viivan
 ## Maalitapahtumien syöttäjätieto
 
 Tulostaulun tapahtumagrafiikka rikastaa maalit `match.events`-listan tiedoilla: maalin tapahtuma yhdistetään `match.goals`-listan vastaavaan maaliin `event_id`-kentän avulla. Jos TorneoPal toimittaa syöttäjän, ilmoituksessa näytetään maalintekijän alla esimerkiksi `(#18 Seikkula Marko)`. Jos syöttäjätietoa ei ole virallisessa vastauksessa, tapahtuma näyttää edelleen tuloksen.
+
+
+## Ottelun tapahtumat
+
+`salibandy-otteluntapahtumat.html` näyttää joukkueiden logot, nimet, tuloksen, pelikellon ja maalit, rangaistukset sekä aikalisät kellonajan mukaisessa aikajärjestyksessä. Sivun tapahtumalista käyttää `match.goals`-, `match.bookings`- ja `match.events`-tietoja, eikä näytä esimerkiksi vaihtoja tai torjuntoja. Lista vierittää oletuksena alareunaan uusimpien tapahtumien luo.
+
+- `?match_id=OTTELUN_ID` – valitsee ottelun
+- `?width=1200` – grafiikan leveys
+- `?scale=1` – skaalaus
+- `?refresh=3` – päivitysväli sekunteina
+- `?preview=1` – esimerkkitapahtumat ilman API-yhteyttä
+- `?remote=1` – ottaa sivun mukaan etäohjauksen näkyvyystilaan
