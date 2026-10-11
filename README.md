@@ -107,3 +107,8 @@ Jos rajapinta ei palauta voimassa olevaa erätietoa, grafiikka näyttää viivan
 - Vierasjoukkueen nimi näkyy ennen logoa; logo sijoittuu oikeaan reunaan.
 - Pelikello-/eränäyttöalue on hieman leveämpi, jotta esimerkiksi `2. ERÄ` mahtuu paremmin.
 - Eränäytön URL-parametrit `clock=period` ja `clockmode=period` säilyvät käytössä.
+
+
+## Maalitapahtumien syöttäjätieto
+
+Tulostaulun tapahtumagrafiikka rikastaa maalit `match.events`-listan tiedoilla: maalin tapahtuma yhdistetään `match.goals`-listan vastaavaan maaliin `event_id`-kentän avulla. Jos TorneoPal toimittaa syöttäjän, ilmoituksessa näytetään maalintekijän alla esimerkiksi `(#18 Seikkula Marko)`. Jos syöttäjätietoa ei ole virallisessa vastauksessa, tapahtuma näyttää edelleen tuloksen.
