@@ -128,19 +128,6 @@ Tulostaulun tapahtumagrafiikka rikastaa maalit `match.events`-listan tiedoilla: 
 - `?remote=1` – ottaa sivun mukaan etäohjauksen näkyvyystilaan
 
 
-## Tulostaulun ja tehopelaajien siirrot
-
-`salibandy-tulostaulu.html` ja `salibandy-tehopelaajat.html` tukevat `offsetX`- ja `offsetY`-URL-parametreja. Jos parametreja ei ole, tulostaulun oletussiirto on X=50, Y=40 ja tehopelaajien X=50, Y=130. Parametrien puuttuminen ei enää muutu virheellisesti nollaksi.
-
-Esimerkit:
-
-- `salibandy-tulostaulu.html?match_id=953141&offsetX=200&offsetY=150`
-- `salibandy-tehopelaajat.html?match_id=953141&offsetX=200&offsetY=250`
-
-Lisäämällä `&debug=1` sivu näyttää käytetyt offset-arvot, selainlähteen koon sekä grafiikan lasketun sijainnin. Ohjauspaneelissa on erilliset kentät molempien grafiikoiden X/Y-arvoille; kopioi sen jälkeen uudet URL-osoitteet OBS:n selainlähteisiin.
-
-**OBS-huomio:** HTML:n siirrot ovat suhteessa selainlähteen omaan näkymään, eivät OBS:n Lähteen muunnos → Sijainti -arvoihin. Jos haluat asettaa grafiikan tiettyyn kohtaan koko 1920 × 1080 -kuvassa, aseta selainlähteen koko 1920 × 1080 ja anna grafiikan sijainnin tulla `offsetX`/`offsetY`-arvoista. Jos selainlähde on esimerkiksi vain 575 × 200 pikseliä, siirtäminen sen sisällä voi rajata grafiikkaa; tällöin muuta lähteen sijaintia OBS:ssa tai käytä koko ruudun selainlähdettä.
-
 ## Ottelun tehopelaajat
 
 `salibandy-tehopelaajat.html` näyttää rinnakkain molempien joukkueiden pelaajat, joilla on vähintään yksi tehopiste. Pelaajat lajitellaan pisteiden, maalien ja syöttöjen mukaan. Rivillä näkyvät maalit + syötöt = pisteet (esim. `3 + 0 = 3`). Tiedot luetaan otteluvastauksen `lineups`-listan `goals`, `assists` ja `points` -kentistä.
@@ -153,3 +140,14 @@ Lisäämällä `&debug=1` sivu näyttää käytetyt offset-arvot, selainlähteen
 - `?remote=1` – ottaa näkyvyyden grafiikkaohjauksen alle
 
 Suositeltu OBS-selainlähteen koko on noin 575 × 360 pikseliä; aseta lähde tulostaulun alapuolelle. Voit ohjauspaneelissa valita **Näytä tulostaulu + tehopelaajat**, jolloin tulostaulu jää näkyviin ja tehopelaajalista tulee sen alle.
+
+
+## Grafiikan koon hienosäätö URL-osoitteella
+
+Kaikki seitsemän grafiikkasivua tukevat parametreja `width` ja `height` pikseleinä. `width` muuttaa grafiikan leveyttä ja `height` sovittaa näkyvän grafiikan haluttuun korkeuteen myös silloin, kun tapahtumien tai pelaajien määrä muuttuu. Jos `height` puuttuu, korkeus pysyy sisällön mukaisena. `scale` on edelleen yleinen lisäskaalaus (0.5–2.5).
+
+Esimerkki: `salibandy-tulostaulu.html?width=650&height=90&offsetX=50&offsetY=40`
+
+Esikatseluun voi lisätä `debug=1`, jolloin sivun oikeaan alakulmaan tulee näkyvien mittojen diagnostiikka.
+
+Oletusleveydet: tulostaulu 575 px; tehopelaajat 575 px; tilastot 1400 px; Lower Third 1400 px; ottelun tapahtumat 1200 px; kokoonpanot 1400 px; sarjataulukko 1100 px. Korkeus on oletuksena automaattinen ja riippuu näkymän sisällöstä.

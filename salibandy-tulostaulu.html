@@ -12,7 +12,7 @@ body.gfx-hidden .gfx{opacity:0;pointer-events:none}
 .fallback{display:flex;align-items:center;justify-content:center;border:2px solid var(--accent);border-radius:50%;color:var(--accent);font-weight:900;background:var(--ink);flex:0 0 auto}
 
 :root{--score-width:575px}
-.stage{position:fixed;left:0;top:0;width:var(--score-width);max-width:none;margin:0;transform:scale(var(--scale));transform-origin:top left}
+.stage{position:fixed;left:var(--offset-x);top:var(--offset-y);width:var(--score-width);max-width:calc(100vw - 12px);margin:0;transform:scale(var(--scale), var(--scale-y, var(--scale)));transform-origin:top left}
 .scorebug{width:100%;height:54px;display:grid;grid-template-columns:minmax(0,1fr) 106px minmax(0,1fr) 70px;background:var(--ink);overflow:hidden}
 .team{min-width:0;display:flex;align-items:center;gap:7px;padding:4px 7px;background:#141d25}
 /* Vierasjoukkue: nimi ensin, logo aivan oman lohkon oikeaan reunaan. */
@@ -36,13 +36,11 @@ body.gfx-hidden .gfx{opacity:0;pointer-events:none}
 @keyframes eventIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:480px){.event-row{grid-template-columns:72px minmax(0,1fr) 30px;min-height:48px}.event-time{font-size:12px}.event-player{font-size:12px}.event-detail{font-size:10px}.event-main{padding:5px 7px}}
 @media(max-width:480px){.scorebug{grid-template-columns:minmax(0,1fr) 78px minmax(0,1fr) 56px}.team{gap:4px;padding:3px}.logo,.fallback{width:34px;height:34px;flex-basis:34px}.team-name{font-size:12px}.score{font-size:19px}.clock{font-size:13px}}
-
-.position-debug{position:fixed!important;left:6px!important;top:6px!important;z-index:2147483647!important;max-width:calc(100vw - 12px);padding:7px 9px;background:rgba(232,197,71,.97);color:#101820;font:700 12px/1.35 Arial,Helvetica,sans-serif;border:1px solid #101820;border-radius:4px;white-space:normal;pointer-events:none}.position-debug.hidden{display:none!important}
 </style></head><body><div class="gfx stage"><div class="scorebug">
 <div class="team a"><div id="logoA" class="fallback">A</div><div id="teamA" class="team-name">KOTI</div></div>
 <div class="score" id="score">0 – 0</div>
 <div class="team b"><div id="teamB" class="team-name">VIERAS</div><div id="logoB" class="fallback">B</div></div>
-<div class="clock" id="clock">00:00</div></div><div id="events" class="events" aria-live="polite"></div></div><div id="positionDebug" class="position-debug hidden"></div><div id="error" class="err hidden"></div>
+<div class="clock" id="clock">00:00</div></div><div id="events" class="events" aria-live="polite"></div></div><div id="error" class="err hidden"></div>
 <script>
 const q=new URLSearchParams(location.search);
 let matchId=q.get('match_id')||q.get('ottelu')||q.get('match')||'';
@@ -79,35 +77,15 @@ function periodLabel(m){
  if(n>regularCount+extraCount)return 'RL';
  return '';
 }
-// A missing URL parameter must use the default; Number(null) is 0, so checking Number(q.get(...)) alone is incorrect.
-function readOffset(name,fallback){
- const aliases=[name,name.toLowerCase(),name==='offsetX'?'x':'y'];
- for(const key of aliases){
-  if(!q.has(key)) continue;
-  const raw=String(q.get(key)??'').trim();
-  if(raw==='') return fallback;
-  const n=Number(raw);
-  return Number.isFinite(n)?Math.max(-4000,Math.min(4000,n)):fallback;
- }
- return fallback;
-}
-const offsetX=readOffset('offsetX',50);
-const offsetY=readOffset('offsetY',40);
+const offsetX=Number.isFinite(Number(q.get('offsetX')))?Number(q.get('offsetX')):50;
+const offsetY=Number.isFinite(Number(q.get('offsetY')))?Number(q.get('offsetY')):40;
 const scale=Math.max(.5,Math.min(2.5,Number(q.get('scale')||1)));
 const width=Math.max(500,Math.min(1920,Number(q.get('width')||1400)));
 document.documentElement.style.setProperty('--offset-x',offsetX+'px');
 document.documentElement.style.setProperty('--offset-y',offsetY+'px');
-// Keep stage positioned relative to the browser-source viewport. Inline !important also protects against external OBS/browser CSS.
+// Apply coordinates directly as well, so the position does not depend on CSS variable resolution.
 const scoreStage=document.querySelector('.stage');
-if(scoreStage){
- scoreStage.style.setProperty('position','fixed','important');
- scoreStage.style.setProperty('left',offsetX+'px','important');
- scoreStage.style.setProperty('top',offsetY+'px','important');
-}
-if(q.get('debug')==='1'){
- const d=document.getElementById('positionDebug');
- if(d){d.classList.remove('hidden');const updatePositionDebug=()=>{const r=scoreStage?.getBoundingClientRect();d.textContent='SIIRRON TARKISTUS: offsetX='+offsetX+' px, offsetY='+offsetY+' px | selainlähde '+window.innerWidth+'×'+window.innerHeight+' px'+(r?' | grafiikan sijainti '+Math.round(r.left)+','+Math.round(r.top)+' px':'');};updatePositionDebug();window.addEventListener('resize',updatePositionDebug);}
-}
+if(scoreStage){scoreStage.style.left=offsetX+'px';scoreStage.style.top=offsetY+'px';}
 document.documentElement.style.setProperty('--scale',scale);
 document.documentElement.style.setProperty('--gfx-width',width+'px');
 const $=id=>document.getElementById(id);
@@ -218,4 +196,54 @@ if(q.get('preview')==='1'){
   {event:{_kind:'goal',time:'16:58',score_A:2,score_B:2,player_shirt_number:'11',player_name:'Myllykangas Tuomo',player_2_name:'Haapaniemi Sauli',shirt_2_number:'44'},match:{live_A:2,live_B:2},createdAt:Date.now()}
  ];activeEvents.push(...demo);$('events').innerHTML=activeEvents.map(x=>eventMarkup(x.event,x.match)).join('');
 }else{update();setInterval(update,refresh*1000);if(clockMode!=='period')setInterval(tickClock,250);}
-</script></body></html>
+</script>
+<script>
+/* URL-kohtainen koon hienosäätö: width= ja height= ovat pikseleitä ennen yleistä scale-kerrointa. */
+(function applyManualDimensions(){
+  const sizeParams = new URLSearchParams(window.location.search);
+  const sizeStage = document.querySelector('.stage');
+  if (!sizeStage) return;
+  const defaultWidth = 575;
+  const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+  const queryNumber = (key, fallback, min, max) => {
+    if (!sizeParams.has(key)) return fallback;
+    const n = Number(sizeParams.get(key));
+    return Number.isFinite(n) && n > 0 ? clamp(n, min, max) : fallback;
+  };
+  const targetWidth = queryNumber('width', defaultWidth, 240, 2400);
+  const requestedHeight = sizeParams.has('height') ? queryNumber('height', null, 40, 2160) : null;
+  const overallScale = queryNumber('scale', 1, 0.5, 2.5);
+  const root = document.documentElement;
+  root.style.setProperty('--scale', String(overallScale));
+  root.style.setProperty('--gfx-width', targetWidth + 'px');
+  root.style.setProperty('--score-width', targetWidth + 'px');
+  /* Inline-arvot voittavat vanhat sivukohtaiset max-width/width-säännöt. */
+  sizeStage.style.width = targetWidth + 'px';
+  sizeStage.style.maxWidth = 'none';
+
+  let debugBox = null;
+  if (sizeParams.get('debug') === '1') {
+    debugBox = document.createElement('div');
+    debugBox.style.cssText = 'position:fixed;right:8px;bottom:8px;z-index:2147483647;background:rgba(16,24,32,.96);border:1px solid #e8c547;color:#fff;padding:7px 9px;font:12px/1.45 Arial,sans-serif;pointer-events:none;white-space:pre-line';
+    document.body.appendChild(debugBox);
+  }
+  function updateSize(){
+    const naturalHeight = sizeStage.offsetHeight;
+    if (!naturalHeight) return;
+    const verticalFit = requestedHeight === null ? 1 : requestedHeight / naturalHeight;
+    root.style.setProperty('--scale-y', String(overallScale * verticalFit));
+    if (debugBox) {
+      const r = sizeStage.getBoundingClientRect();
+      debugBox.textContent = 'KOKOSÄÄDÖT\nwidth=' + targetWidth + ' px\nheight=' + (requestedHeight === null ? 'auto (' + Math.round(naturalHeight) + ' px)' : requestedHeight + ' px') + '\nscale=' + overallScale + '\nNäkyvä laatikko: ' + Math.round(r.width) + ' × ' + Math.round(r.height) + ' px';
+    }
+  }
+  /* Sisältökorkeus voi muuttua, kun pelaajat/tapahtumat päivittyvät. */
+  if ('ResizeObserver' in window) {
+    const ro = new ResizeObserver(() => requestAnimationFrame(updateSize));
+    ro.observe(sizeStage);
+  }
+  window.addEventListener('resize', updateSize);
+  requestAnimationFrame(updateSize);
+})();
+</script>
+</body></html>

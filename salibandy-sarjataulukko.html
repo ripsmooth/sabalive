@@ -6,7 +6,7 @@
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:transparent;overflow:hidden}
 body{font-family:Arial,Helvetica,sans-serif;color:var(--white);font-variant-numeric:tabular-nums}
 .gfx{filter:drop-shadow(0 4px 8px rgba(0,0,0,.3))}
-.stage{position:absolute;left:calc(50% + var(--offset-x));top:calc(8px + var(--offset-y));width:var(--gfx-width);max-width:calc(100vw - 16px);transform:translateX(-50%) scale(var(--scale));transform-origin:top center}
+.stage{position:absolute;left:calc(50% + var(--offset-x));top:calc(8px + var(--offset-y));width:var(--gfx-width);max-width:calc(100vw - 16px);transform:translateX(-50%) scale(var(--scale), var(--scale-y, var(--scale)));transform-origin:top center}
 .heading{min-height:62px;display:flex;align-items:center;justify-content:space-between;gap:18px;background:var(--ink);border-bottom:4px solid var(--accent);padding:12px 20px}
 .heading-title{font-size:25px;font-weight:900;letter-spacing:.06em;text-transform:uppercase}
 .competition{font-size:15px;color:var(--muted);font-weight:800;text-align:right}
@@ -74,4 +74,54 @@ function render(data){
 }
 async function update(){try{await ensureMatchId();const u=new URL('/api/salibandy-standings',location.origin);u.searchParams.set('match_id',matchId);u.searchParams.set('timeStamp',Date.now());const r=await fetch(u,{cache:'no-store'});const d=await r.json();if(!r.ok)throw Error(d.error||'Sarjataulukon haku epäonnistui.');render(d)}catch(e){$('error').textContent='Sarjataulukko: '+(e.message||e);$('error').classList.remove('hidden')}}
 update();setInterval(update,30000);
-</script></body></html>
+</script>
+<script>
+/* URL-kohtainen koon hienosäätö: width= ja height= ovat pikseleitä ennen yleistä scale-kerrointa. */
+(function applyManualDimensions(){
+  const sizeParams = new URLSearchParams(window.location.search);
+  const sizeStage = document.querySelector('.stage');
+  if (!sizeStage) return;
+  const defaultWidth = 1100;
+  const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+  const queryNumber = (key, fallback, min, max) => {
+    if (!sizeParams.has(key)) return fallback;
+    const n = Number(sizeParams.get(key));
+    return Number.isFinite(n) && n > 0 ? clamp(n, min, max) : fallback;
+  };
+  const targetWidth = queryNumber('width', defaultWidth, 240, 2400);
+  const requestedHeight = sizeParams.has('height') ? queryNumber('height', null, 40, 2160) : null;
+  const overallScale = queryNumber('scale', 1, 0.5, 2.5);
+  const root = document.documentElement;
+  root.style.setProperty('--scale', String(overallScale));
+  root.style.setProperty('--gfx-width', targetWidth + 'px');
+  root.style.setProperty('--score-width', targetWidth + 'px');
+  /* Inline-arvot voittavat vanhat sivukohtaiset max-width/width-säännöt. */
+  sizeStage.style.width = targetWidth + 'px';
+  sizeStage.style.maxWidth = 'none';
+
+  let debugBox = null;
+  if (sizeParams.get('debug') === '1') {
+    debugBox = document.createElement('div');
+    debugBox.style.cssText = 'position:fixed;right:8px;bottom:8px;z-index:2147483647;background:rgba(16,24,32,.96);border:1px solid #e8c547;color:#fff;padding:7px 9px;font:12px/1.45 Arial,sans-serif;pointer-events:none;white-space:pre-line';
+    document.body.appendChild(debugBox);
+  }
+  function updateSize(){
+    const naturalHeight = sizeStage.offsetHeight;
+    if (!naturalHeight) return;
+    const verticalFit = requestedHeight === null ? 1 : requestedHeight / naturalHeight;
+    root.style.setProperty('--scale-y', String(overallScale * verticalFit));
+    if (debugBox) {
+      const r = sizeStage.getBoundingClientRect();
+      debugBox.textContent = 'KOKOSÄÄDÖT\nwidth=' + targetWidth + ' px\nheight=' + (requestedHeight === null ? 'auto (' + Math.round(naturalHeight) + ' px)' : requestedHeight + ' px') + '\nscale=' + overallScale + '\nNäkyvä laatikko: ' + Math.round(r.width) + ' × ' + Math.round(r.height) + ' px';
+    }
+  }
+  /* Sisältökorkeus voi muuttua, kun pelaajat/tapahtumat päivittyvät. */
+  if ('ResizeObserver' in window) {
+    const ro = new ResizeObserver(() => requestAnimationFrame(updateSize));
+    ro.observe(sizeStage);
+  }
+  window.addEventListener('resize', updateSize);
+  requestAnimationFrame(updateSize);
+})();
+</script>
+</body></html>

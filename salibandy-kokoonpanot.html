@@ -11,7 +11,7 @@ body.gfx-hidden .gfx{opacity:0;pointer-events:none}
 .logo{object-fit:contain;display:block}
 .fallback{display:flex;align-items:center;justify-content:center;border:2px solid var(--accent);border-radius:50%;color:var(--accent);font-weight:900;background:var(--ink);flex:0 0 auto}
 
-.stage{position:absolute;left:calc(50% + var(--offset-x));top:calc(8px + var(--offset-y));width:var(--gfx-width);max-width:calc(100vw - 16px);transform:translateX(-50%) scale(var(--scale));transform-origin:top center}
+.stage{position:absolute;left:calc(50% + var(--offset-x));top:calc(8px + var(--offset-y));width:var(--gfx-width);max-width:calc(100vw - 16px);transform:translateX(-50%) scale(var(--scale), var(--scale-y, var(--scale)));transform-origin:top center}
 .header{height:112px;display:grid;grid-template-columns:minmax(0,1fr) 250px minmax(0,1fr);align-items:stretch;background:var(--accent);border-bottom:4px solid var(--accent)}
 .team{display:flex;align-items:center;gap:17px;padding:12px 24px;min-width:0;background:rgba(16,24,32,.98)}.team.b{flex-direction:row-reverse;text-align:right}
 .logo{width:70px;height:70px;flex:0 0 70px}.fallback{width:70px;height:70px;font-size:22px}
@@ -62,4 +62,54 @@ function clearError(){const e=$('error');if(e)e.classList.add('hidden')}
 function renderLineup(side,players){const target=$('players'+side);target.innerHTML='';for(const p of players){const row=document.createElement('div');row.className='player';const n=document.createElement('div');n.className='number';n.textContent=p.shirt_number||'—';const nm=document.createElement('div');nm.className='pname';nm.textContent=p.player_name||'Tuntematon pelaaja';const tags=[];if(String(p.captain||'').toUpperCase()==='C')tags.push('C');else if(String(p.captain||'').toUpperCase()==='A')tags.push('A');if(String(p.position_fi||p.position||'').toLowerCase()==='mv')tags.push('MV');const tag=document.createElement('div');tag.className='tag';tag.textContent=tags.join(' · ');row.append(n,nm,tag);target.append(row)}}
 async function update(){try{const m=await getMatch(),t=teamFields(m);setLogo('logoA',t.a.logo,t.a.name);setLogo('logoB',t.b.logo,t.b.name);setText('teamAName',t.a.name);setText('teamBName',t.b.name);setText('titleA',t.a.name);setText('titleB',t.b.name);const all=Array.isArray(m.lineups)?m.lineups:[];const a=all.filter(p=>String(p.team_id)===t.a.id),b=all.filter(p=>String(p.team_id)===t.b.id);renderLineup('A',a);renderLineup('B',b);setText('countA',a.length+' PELAAJAA');setText('countB',b.length+' PELAAJAA');$('emptyA').classList.toggle('hidden',a.length>0);$('emptyB').classList.toggle('hidden',b.length>0);clearError()}catch(e){showError(e)}}
 startVisibility('lineups',false);update();setInterval(update,refresh*1000);
-</script></body></html>
+</script>
+<script>
+/* URL-kohtainen koon hienosäätö: width= ja height= ovat pikseleitä ennen yleistä scale-kerrointa. */
+(function applyManualDimensions(){
+  const sizeParams = new URLSearchParams(window.location.search);
+  const sizeStage = document.querySelector('.stage');
+  if (!sizeStage) return;
+  const defaultWidth = 1400;
+  const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+  const queryNumber = (key, fallback, min, max) => {
+    if (!sizeParams.has(key)) return fallback;
+    const n = Number(sizeParams.get(key));
+    return Number.isFinite(n) && n > 0 ? clamp(n, min, max) : fallback;
+  };
+  const targetWidth = queryNumber('width', defaultWidth, 240, 2400);
+  const requestedHeight = sizeParams.has('height') ? queryNumber('height', null, 40, 2160) : null;
+  const overallScale = queryNumber('scale', 1, 0.5, 2.5);
+  const root = document.documentElement;
+  root.style.setProperty('--scale', String(overallScale));
+  root.style.setProperty('--gfx-width', targetWidth + 'px');
+  root.style.setProperty('--score-width', targetWidth + 'px');
+  /* Inline-arvot voittavat vanhat sivukohtaiset max-width/width-säännöt. */
+  sizeStage.style.width = targetWidth + 'px';
+  sizeStage.style.maxWidth = 'none';
+
+  let debugBox = null;
+  if (sizeParams.get('debug') === '1') {
+    debugBox = document.createElement('div');
+    debugBox.style.cssText = 'position:fixed;right:8px;bottom:8px;z-index:2147483647;background:rgba(16,24,32,.96);border:1px solid #e8c547;color:#fff;padding:7px 9px;font:12px/1.45 Arial,sans-serif;pointer-events:none;white-space:pre-line';
+    document.body.appendChild(debugBox);
+  }
+  function updateSize(){
+    const naturalHeight = sizeStage.offsetHeight;
+    if (!naturalHeight) return;
+    const verticalFit = requestedHeight === null ? 1 : requestedHeight / naturalHeight;
+    root.style.setProperty('--scale-y', String(overallScale * verticalFit));
+    if (debugBox) {
+      const r = sizeStage.getBoundingClientRect();
+      debugBox.textContent = 'KOKOSÄÄDÖT\nwidth=' + targetWidth + ' px\nheight=' + (requestedHeight === null ? 'auto (' + Math.round(naturalHeight) + ' px)' : requestedHeight + ' px') + '\nscale=' + overallScale + '\nNäkyvä laatikko: ' + Math.round(r.width) + ' × ' + Math.round(r.height) + ' px';
+    }
+  }
+  /* Sisältökorkeus voi muuttua, kun pelaajat/tapahtumat päivittyvät. */
+  if ('ResizeObserver' in window) {
+    const ro = new ResizeObserver(() => requestAnimationFrame(updateSize));
+    ro.observe(sizeStage);
+  }
+  window.addEventListener('resize', updateSize);
+  requestAnimationFrame(updateSize);
+})();
+</script>
+</body></html>
