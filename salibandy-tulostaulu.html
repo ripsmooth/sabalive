@@ -43,18 +43,46 @@ function setText(id,value){const e=$(id);if(e)e.textContent=value??''}
 function setLogo(id,url,name){const e=$(id);if(!e)return;e.innerHTML='';if(url&&/^https?:\/\//i.test(url)){const im=document.createElement('img');im.className='logo';im.src=url;im.alt='';im.onerror=()=>fallback();e.className='';e.appendChild(im);function fallback(){e.className='fallback';e.textContent=(name||'?').slice(0,2).toUpperCase()}}else{e.className='fallback';e.textContent=(name||'?').slice(0,2).toUpperCase()}}
 function teamFields(m){return {a:{id:String(m.team_A_id||''),name:m.team_A_name||m.club_A_name||'KOTI',logo:m.club_A_crest||m.team_A_crest||''},b:{id:String(m.team_B_id||''),name:m.team_B_name||m.club_B_name||'VIERAS',logo:m.club_B_crest||m.team_B_crest||''}}}
 function getScore(m){return {a:m.live_A??m.fs_A??'0',b:m.live_B??m.fs_B??'0'}}
-let clockBaseSeconds=null;let clockReceivedAt=0;let clockIsRunning=false;let clockFinished=false;let clockPeriodKey='';
+let clockBaseSeconds=null;let clockReceivedAt=0;let clockIsRunning=false;let clockFinished=false;let clockPeriodKey='';let updateInFlight=false;
 function parseClockSeconds(value){if(value===null||value===undefined||value==='')return null;const s=String(value).trim();const m=s.match(/^(\d{1,3}):(\d{2})(?::(\d{2}))?$/);if(m){if(m[3]!==undefined)return Number(m[1])*3600+Number(m[2])*60+Number(m[3]);return Number(m[1])*60+Number(m[2])}if(/^\d+(?:\.\d+)?$/.test(s))return Math.floor(Number(s));return null}
 function parseTimerStartEpoch(value){if(value===null||value===undefined||value==='')return null;const s=String(value).trim();if(/^\d{10,13}$/.test(s)){const n=Number(s);return n>1e12?n:n*1000}const n=Date.parse(s);return Number.isFinite(n)?n:null}
 function formatClockSeconds(total){total=Math.max(0,Math.floor(total));const mm=Math.floor(total/60),ss=total%60;return String(mm).padStart(2,'0')+':'+String(ss).padStart(2,'0')}
 function timerRunning(m){const v=m.live_timer_on;return v===true||v===1||v==='1'||String(v).toLowerCase()==='true'||String(v).toLowerCase()==='on'}
-function matchClock(m){const status=String(m.status||'').toLowerCase();if(['played','finished','over'].includes(status)){clockFinished=true;clockIsRunning=false;return 'LOPPUTULOS'}clockFinished=false;const running=timerRunning(m);const periodKey=String(m.live_period??m.period??m.period_no??m.period_number??m.current_period??'');const periodChanged=!!(periodKey&&clockPeriodKey&&periodKey!==clockPeriodKey);if(periodKey)clockPeriodKey=periodKey;let raw=m.live_time_mmss||m.live_time;let parsed=parseClockSeconds(raw);let timerStartEpoch=parseTimerStartEpoch(m.live_timer_start_time);const timerStartSeconds=parseClockSeconds(m.live_timer_start);if(parsed===null&&timerStartSeconds!==null)parsed=timerStartSeconds;if(parsed===null&&timerStartEpoch!==null&&timerStartSeconds!==null){parsed=timerStartSeconds+(running?Math.max(0,(Date.now()-timerStartEpoch)/1000):0)}if(parsed!==null){const now=Date.now();const displayed=clockBaseSeconds===null?null:clockBaseSeconds+(clockIsRunning?(now-clockReceivedAt)/1000:0);const backwards=displayed!==null&&parsed<displayed-2;const likelyStale=running&&clockIsRunning&&backwards&&!periodChanged&&(displayed-parsed)<240;if(!likelyStale){if(timerStartEpoch!==null&&timerStartSeconds!==null&&running&&!(m.live_time_mmss||m.live_time)){parsed=timerStartSeconds+Math.max(0,(now-timerStartEpoch)/1000)}clockBaseSeconds=parsed;clockReceivedAt=now;}clockIsRunning=running;return formatClockSeconds(clockBaseSeconds+(clockIsRunning?(now-clockReceivedAt)/1000:0))}clockIsRunning=false;return m.time?String(m.time).slice(0,5):''}
+function matchClock(m){
+ const status=String(m.status||'').toLowerCase();
+ if(['played','finished','over'].includes(status)){clockFinished=true;clockIsRunning=false;return 'LOPPUTULOS'}
+ clockFinished=false;
+ const running=timerRunning(m);
+ const periodKey=String(m.live_period??m.period??m.period_no??m.period_number??m.current_period??'');
+ const periodChanged=!!(periodKey&&clockPeriodKey&&periodKey!==clockPeriodKey);
+ if(periodKey)clockPeriodKey=periodKey;
+ const raw=m.live_time_mmss||m.live_time;
+ let parsed=parseClockSeconds(raw);
+ const timerStartEpoch=parseTimerStartEpoch(m.live_timer_start_time);
+ const timerStartSeconds=parseClockSeconds(m.live_timer_start);
+ if(parsed===null&&timerStartSeconds!==null)parsed=timerStartSeconds;
+ if(parsed===null&&timerStartEpoch!==null&&timerStartSeconds!==null)parsed=timerStartSeconds+(running?Math.max(0,(Date.now()-timerStartEpoch)/1000):0);
+ if(parsed===null){clockIsRunning=false;return m.time?String(m.time).slice(0,5):''}
+ const now=Date.now();
+ const displayed=clockBaseSeconds===null?null:clockBaseSeconds+(clockIsRunning?(now-clockReceivedAt)/1000:0);
+ const backwards=displayed!==null&&parsed<displayed-2;
+ // While running, ignore short-lived stale clock values. A stopped timer is authoritative:
+ // accept its exact server time and freeze immediately, even if it is lower than local time.
+ const likelyStale=running&&clockIsRunning&&backwards&&!periodChanged&&(displayed-parsed)<240;
+ if(!likelyStale){
+   if(timerStartEpoch!==null&&timerStartSeconds!==null&&running&&!(m.live_time_mmss||m.live_time))parsed=timerStartSeconds+Math.max(0,(now-timerStartEpoch)/1000);
+   clockBaseSeconds=parsed;
+   clockReceivedAt=now;
+ }
+ clockIsRunning=running;
+ return formatClockSeconds(clockBaseSeconds+(clockIsRunning?(now-clockReceivedAt)/1000:0))
+}
 function tickClock(){if(clockBaseSeconds===null||clockFinished)return;if(clockIsRunning){const elapsed=(Date.now()-clockReceivedAt)/1000;setText('clock',formatClockSeconds(clockBaseSeconds+elapsed))}}
 async function updateVisibility(key,defaultVisible){try{const r=await fetch('/api/salibandy-graphics-state',{cache:'no-store'});if(!r.ok)return;const d=await r.json();document.body.classList.toggle('gfx-hidden',d[key]!==true)}catch(e){/* retain default visibility if remote control is unreachable */}}
 function startVisibility(key,defaultVisible){const remote=new URLSearchParams(location.search).get('remote')==='1';if(!remote){document.body.classList.remove('gfx-hidden');return}if(!defaultVisible)document.body.classList.add('gfx-hidden');updateVisibility(key,defaultVisible);setInterval(()=>updateVisibility(key,defaultVisible),2000)}
 function showError(err){const e=$('error');if(e){e.textContent='Salibandy: '+(err?.message||err);e.classList.remove('hidden')}}
 function clearError(){const e=$('error');if(e)e.classList.add('hidden')}
 
-async function update(){try{const m=await getMatch();const t=teamFields(m),sc=getScore(m);setText('teamA',t.a.name);setText('teamB',t.b.name);setLogo('logoA',t.a.logo,t.a.name);setLogo('logoB',t.b.logo,t.b.name);setText('score',String(sc.a)+' – '+String(sc.b));setText('clock',matchClock(m)||'');clearError()}catch(e){showError(e)}}
+async function update(){if(updateInFlight)return;updateInFlight=true;try{const m=await getMatch();const t=teamFields(m),sc=getScore(m);setText('teamA',t.a.name);setText('teamB',t.b.name);setLogo('logoA',t.a.logo,t.a.name);setLogo('logoB',t.b.logo,t.b.name);setText('score',String(sc.a)+' – '+String(sc.b));setText('clock',matchClock(m)||'');clearError()}catch(e){showError(e)}finally{updateInFlight=false}}
 startVisibility('scorebug',true);update();setInterval(update,refresh*1000);setInterval(tickClock,250);
 </script></body></html>
