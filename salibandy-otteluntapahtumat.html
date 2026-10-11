@@ -101,22 +101,45 @@ function isPenaltyEvent(e){const s=readText(e);return /rangaistus|jäähy|jaahy|
 function isTimeoutEvent(e){const s=readText(e);return /aikalisä|aikalis[aä]|timeout|time[ -]?out|team timeout/.test(s)}
 function mergeEvent(base,extra){return {...(extra||{}),...(base||{})}}
 function normaliseEvents(m){
+ // Tällä grafiikalla näytetään vain maalit. Rangaistukset, aikalisät ja muut
+ // ottelutapahtumat jätetään tarkoituksella pois.
  const rawEvents=Array.isArray(m.events)?m.events:[];
  const goalMap=new Map();
- for(const e of rawEvents.filter(isGoalEvent))goalMap.set(eventId(e,'goal'),{...e,_kind:'goal'});
- for(const g of (Array.isArray(m.goals)?m.goals:[])){const key=eventId(g,'goal');const existing=goalMap.get(key);const merged={...(existing||{}),...g};for(const field of ['description','description_text','code_fi','code_en','note','goal_type','type'])if((merged[field]===undefined||merged[field]===null||String(merged[field]).trim()==='')&&existing?.[field])merged[field]=existing[field];goalMap.set(key,{...merged,_kind:'goal',_key:key});}
- // Join one or two scorer-assist records to the related goal, when TorneoPal exposes them.
- for(const e of rawEvents){if(String(e.code||'').toLowerCase()!=='syotto')continue;const key=String(e.connected_event_id||'');for(const g of goalMap.values()){if(key&&key===String(g.event_id||g.id||'')){g._assists=g._assists||[];if(e.player_name)g._assists.push({name:e.player_name,number:e.player_shirt_number??e.shirt_number??''})}}}
- const out=[...goalMap.values()];
- const penaltyMap=new Map();
- for(const b of (Array.isArray(m.bookings)?m.bookings:[])){const key=eventId(b,'penalty');penaltyMap.set(key,{...b,_kind:'penalty',_key:key})}
- for(const e of rawEvents){if(isPenaltyEvent(e)&&!isGoalEvent(e)&&!isTimeoutEvent(e)){const key=eventId(e,'penalty');if(!penaltyMap.has(key))penaltyMap.set(key,{...e,_kind:'penalty',_key:key})}}
- for(const p of ['timeouts','time_outs','timeout_events','timeOuts'])if(Array.isArray(m[p]))for(const e of m[p]){const key=eventId(e,'timeout');out.push({...e,_kind:'timeout',_key:key})}
- const timeoutMap=new Map();
- for(const e of rawEvents){if(isTimeoutEvent(e)){const key=eventId(e,'timeout');if(!timeoutMap.has(key))timeoutMap.set(key,{...e,_kind:'timeout',_key:key})}}
- out.push(...penaltyMap.values(),...timeoutMap.values());
+ for(const e of rawEvents.filter(isGoalEvent)){
+   const key=eventId(e,'goal');
+   goalMap.set(key,{...e,_kind:'goal',_key:key});
+ }
+ // TorneoPalin maalilista on ensisijainen lähde; yhdistä siihen tapahtumalistan
+ // tarkemmat lisätiedot, jos ne ovat saatavilla.
+ for(const g of (Array.isArray(m.goals)?m.goals:[])){
+   const key=eventId(g,'goal');
+   const existing=goalMap.get(key);
+   const merged={...(existing||{}),...g};
+   for(const field of ['description','description_text','code_fi','code_en','note','goal_type','type']){
+     if((merged[field]===undefined||merged[field]===null||String(merged[field]).trim()==='')&&existing?.[field])merged[field]=existing[field];
+   }
+   goalMap.set(key,{...merged,_kind:'goal',_key:key});
+ }
+ // Liitä maalin syöttäjät siihen liittyvään maaliin, jos rajapinta tarjoaa ne.
+ for(const e of rawEvents){
+   if(String(e.code||'').toLowerCase()!=='syotto')continue;
+   const key=String(e.connected_event_id||'');
+   for(const g of goalMap.values()){
+     if(key&&key===String(g.event_id||g.id||'')){
+       g._assists=g._assists||[];
+       if(e.player_name)g._assists.push({name:e.player_name,number:e.player_shirt_number??e.shirt_number??''});
+     }
+   }
+ }
  const seen=new Set();
- return out.filter(e=>{const k=e._key||eventId(e,e._kind||'event');if(seen.has(k))return false;seen.add(k);e._key=k;return true}).map(e=>{const n=eventSeconds(e,m);return {...e,_sort:n===null?Number.MAX_SAFE_INTEGER:n,_displayTime:displayEventTime(e,n)}}).sort((a,b)=>a._sort-b._sort||String(a.wall_time||'').localeCompare(String(b.wall_time||''))||String(a._key).localeCompare(String(b._key)));
+ return [...goalMap.values()].filter(e=>{
+   const k=e._key||eventId(e,'goal');
+   if(seen.has(k))return false;
+   seen.add(k);e._key=k;return true;
+ }).map(e=>{
+   const n=eventSeconds(e,m);
+   return {...e,_kind:'goal',_sort:n===null?Number.MAX_SAFE_INTEGER:n,_displayTime:displayEventTime(e,n)};
+ }).sort((a,b)=>a._sort-b._sort||String(a.wall_time||'').localeCompare(String(b.wall_time||''))||String(a._key).localeCompare(String(b._key)));
 }
 function eventSeconds(e,m){let n=parseClockSeconds(e.time);if(n!==null)return n;const tm=Number(e.time_min);if(Number.isFinite(tm)&&tm>0)return tm*60;const sec=Number(e.time_sec);if(Number.isFinite(sec)&&sec>=0){const period=Number(e.period);const length=(Number(m.period_min)||20)*60;return (Math.max(1,period)-1)*length+sec}return null}
 function displayEventTime(e,seconds){const raw=String(e.time??'').trim();if(raw&&/^\d{1,3}:\d{2}(?::\d{2})?$/.test(raw)){const n=parseClockSeconds(raw);return n===null?raw:formatEventClock(n)}if(raw&&/^\d{1,3}\+\d{1,3}:\d{2}$/.test(raw))return seconds===null?raw:formatEventClock(seconds);if(seconds!==null)return formatEventClock(seconds);const m=String(e.time_min??'').trim();return m?m+"'":'—'}
@@ -130,7 +153,7 @@ function eventData(e,m,t){const kind=e._kind,team=eventTeam(e,t),number=e.player
  return `<article class="event-row ${kind}"><div class="event-time"><span>${esc(e._displayTime||'—')}</span><small>${esc(periodForEvent(e,m))}</small></div><div class="event-main"><div class="team-pill ${team.side}"><i class="team-dot"></i><span>${esc(team.name||'OTTELU')}</span></div><div class="event-copy"><div class="event-name">${esc(prefix+name)}</div>${detail?'<div class="event-detail">'+esc(detail)+'</div>':''}</div></div><div class="event-side"><div class="type">${esc(type)}</div><div class="meta">${esc(meta)}</div></div></article>`
 }
 function periodForEvent(e,m){const p=Number(e.period);if(Number.isInteger(p)&&p>=1&&p<=3)return p+'. ERÄ';const seconds=e._sort;if(Number.isFinite(seconds)&&seconds!==Number.MAX_SAFE_INTEGER){const periodLength=(Number(m.period_min)||20)*60;const p2=Math.max(1,Math.min(Number(m.period_count)||3,Math.floor(seconds/periodLength)+1));return p2+'. ERÄ'}return 'OTTELU'}
-function renderEvents(m,t){const list=normaliseEvents(m);const host=$('events');if(!list.length){host.innerHTML='<div class="empty">Ottelusta ei löytynyt vielä maaleja, rangaistuksia tai aikalisämerkintöjä.</div>';setText('eventCount','0 TAPAHTUMAA');return}host.innerHTML=list.map(e=>eventData(e,m,t)).join('');setText('eventCount',list.length+' TAPAHTUMAA · AIKAJÄRJESTYKSESSÄ');if(q.get('autoscroll')!=='0')host.scrollTop=host.scrollHeight}
+function renderEvents(m,t){const list=normaliseEvents(m);const host=$('events');if(!list.length){host.innerHTML='<div class="empty">Ottelusta ei löytynyt vielä maalitapahtumia.</div>';setText('eventCount','0 TAPAHTUMAA');return}host.innerHTML=list.map(e=>eventData(e,m,t)).join('');setText('eventCount',list.length+' TAPAHTUMAA · AIKAJÄRJESTYKSESSÄ');if(q.get('autoscroll')!=='0')host.scrollTop=host.scrollHeight}
 let inFlight=false;
 async function update(){if(inFlight)return;inFlight=true;try{const m=await getMatch(),t=teamFields(m),score=getScore(m);setLogo('logoA',t.a.logo,t.a.name);setLogo('logoB',t.b.logo,t.b.name);setText('teamAName',t.a.name);setText('teamBName',t.b.name);setText('score',String(score.a)+' – '+String(score.b));setText('clock',displayClock(m));setText('period',periodLabel(m));setText('competition',m.competition_name||'SALIBANDY');renderEvents(m,t);clearError()}catch(e){showError(e)}finally{inFlight=false}}
 function demo(){const m={team_A_id:'1',team_A_name:'PIRKAT',club_A_crest:'',team_B_id:'2',team_B_name:'JOSBA',club_B_crest:'',live_A:4,live_B:3,live_time_mmss:'17:08',live_period:'2',competition_name:'INSSI-DIVARI MIEHET',period_min:20,status:'Live',goals:[{event_id:'g1',team_id:'2',player_shirt_number:'18',player_name:'Korhonen Mika',time:'0:47',period:'1',score_A:0,score_B:1},{event_id:'g2',team_id:'1',player_shirt_number:'9',player_name:'Laine Joonas',time:'8:22',period:'1',score_A:1,score_B:1},{event_id:'g3',team_id:'2',player_shirt_number:'44',player_name:'Niemi Ville',time:'22:43',period:'2',score_A:1,score_B:2},{event_id:'g4',team_id:'1',player_shirt_number:'5',player_name:'Rantala Olli',time:'31:18',period:'2',score_A:2,score_B:2}],bookings:[{event_id:'p1',team_id:'2',player_shirt_number:'21',player_name:'Virtanen Antti',time:'25:02',period:'2',code:'2min',description_text:'Mailarike'}],events:[{event_id:'a1',code:'aikalisä',code_fi:'Aikalisä',team_id:'1',player_name:'Pirkko',time:'27:40',period:'2',description:'Joukkueen aikalisä'},{event_id:'s1',code:'syotto',connected_event_id:'g3',player_name:'Kallio Teemu',time:'22:43',period:'2'}]};const t=teamFields(m);setLogo('logoA','',t.a.name);setLogo('logoB','',t.b.name);setText('teamAName',t.a.name);setText('teamBName',t.b.name);setText('score','4 – 3');setText('clock','17:08');setText('period','2. ERÄ');setText('competition',m.competition_name);renderEvents(m,t)}

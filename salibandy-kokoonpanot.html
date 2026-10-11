@@ -24,7 +24,7 @@ body.gfx-hidden .gfx{opacity:0;pointer-events:none}
 .players{padding:7px 14px 12px;display:grid;grid-template-columns:minmax(0,1fr);gap:0}
 .player{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:8px;align-items:center;min-height:30px;border-bottom:1px solid #34434d;padding:2px 1px}
 .number{display:flex;justify-content:center;align-items:center;background:var(--accent);color:var(--ink);font-size:15px;font-weight:900;min-height:25px;clip-path:polygon(0 0,100% 0,86% 100%,0 100%)}
-.pname{font-size:18.2px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pname{font-size:17px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tag{color:var(--accent);font-size:10px;font-weight:900;white-space:nowrap}
 .empty{padding:18px;color:var(--muted);font-size:14px}
 @media(max-width:750px){.header{height:82px;grid-template-columns:minmax(0,1fr) 110px minmax(0,1fr)}.team{gap:8px;padding:7px}.logo,.fallback{width:43px;height:43px;flex-basis:43px}.teamname{font-size:13px}.mid{font-size:15px}.players{grid-template-columns:minmax(0,1fr);padding:5px}.pname{font-size:15.6px}.player{grid-template-columns:30px minmax(0,1fr) auto}.number{font-size:12px}}
@@ -64,7 +64,7 @@ async function update(){try{const m=await getMatch(),t=teamFields(m);setLogo('lo
 startVisibility('lineups',false);update();setInterval(update,refresh*1000);
 </script>
 <script>
-/* Kokoonpanot keskelle ruutua. Oletusleveys 840 px (-40 %); pelaajanimet +30 %. width/height/scale säilyvät URL-säätiminä. */
+/* Kokoonpanot keskelle ruutua. Oletusleveys 840 px (-40 %); pelaajanimet 17 px. width/height/scale säilyvät URL-säätiminä. */
 (function applyLineupDimensions(){
   const params=new URLSearchParams(window.location.search);
   const stage=document.querySelector('.stage');
