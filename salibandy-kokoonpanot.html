@@ -15,7 +15,7 @@ body.gfx-hidden .gfx{opacity:0;pointer-events:none}
 .header{height:112px;display:grid;grid-template-columns:minmax(0,1fr) 190px minmax(0,1fr);align-items:stretch;background:var(--accent);border-bottom:4px solid var(--accent)}
 .team{display:flex;align-items:center;gap:17px;padding:12px 24px;min-width:0;background:rgba(16,24,32,.98)}.team.b{flex-direction:row-reverse;text-align:right}
 .logo{width:72px;height:72px;flex:0 0 72px}.fallback{width:72px;height:72px;font-size:22px}
-.teamname{font-size:clamp(20px,2vw,34px);font-weight:900;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.teamname{flex:1 1 0;min-width:0;font-size:clamp(20px,2vw,34px);font-weight:900;text-transform:uppercase;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere;white-space:normal;line-height:1.05;max-height:2.1em}
 .mid{display:flex;align-items:center;justify-content:center;background:var(--accent);color:var(--ink);font-size:27px;line-height:1.02;font-weight:900;text-transform:uppercase;text-align:center;clip-path:polygon(9% 0,91% 0,100% 100%,0 100%);padding:8px}
 .cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
 .roster{background:rgba(16,24,32,.97);border-top:3px solid var(--accent);min-width:0;overflow:visible}
