@@ -12,11 +12,11 @@ body.gfx-hidden .gfx{opacity:0;pointer-events:none}
 .fallback{display:flex;align-items:center;justify-content:center;border:2px solid var(--accent);border-radius:50%;color:var(--accent);font-weight:900;background:var(--ink);flex:0 0 auto}
 
 .stage{position:fixed;left:calc(50% + var(--offset-x));top:calc(50% + var(--offset-y));width:var(--gfx-width);max-width:none;transform:translate(-50%,-50%) scale(var(--scale), var(--scale-y, var(--scale)));transform-origin:center center}
-.header{height:112px;display:grid;grid-template-columns:minmax(0,1fr) 250px minmax(0,1fr);align-items:stretch;background:var(--accent);border-bottom:4px solid var(--accent)}
+.header{height:112px;display:grid;grid-template-columns:minmax(0,1fr) 190px minmax(0,1fr);align-items:stretch;background:var(--accent);border-bottom:4px solid var(--accent)}
 .team{display:flex;align-items:center;gap:17px;padding:12px 24px;min-width:0;background:rgba(16,24,32,.98)}.team.b{flex-direction:row-reverse;text-align:right}
 .logo{width:72px;height:72px;flex:0 0 72px}.fallback{width:72px;height:72px;font-size:22px}
 .teamname{font-size:clamp(20px,2vw,34px);font-weight:900;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.mid{display:flex;align-items:center;justify-content:center;background:var(--accent);color:var(--ink);font-size:27px;font-weight:900;text-transform:uppercase;text-align:center;clip-path:polygon(9% 0,91% 0,100% 100%,0 100%);padding:8px}
+.mid{display:flex;align-items:center;justify-content:center;background:var(--accent);color:var(--ink);font-size:27px;line-height:1.02;font-weight:900;text-transform:uppercase;text-align:center;clip-path:polygon(9% 0,91% 0,100% 100%,0 100%);padding:8px}
 .cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
 .roster{background:rgba(16,24,32,.97);border-top:3px solid var(--accent);min-width:0;overflow:visible}
 .roster-title{background:var(--panel);padding:11px 18px;display:flex;justify-content:space-between;font-size:17px;font-weight:900;text-transform:uppercase;letter-spacing:.04em}
@@ -29,7 +29,7 @@ body.gfx-hidden .gfx{opacity:0;pointer-events:none}
 .empty{padding:18px;color:var(--muted);font-size:14px}
 @media(max-width:750px){.header{height:82px;grid-template-columns:minmax(0,1fr) 110px minmax(0,1fr)}.team{gap:8px;padding:7px}.logo,.fallback{width:43px;height:43px;flex-basis:43px}.teamname{font-size:13px}.mid{font-size:15px}.players{grid-template-columns:minmax(0,1fr);padding:5px}.pname{font-size:15.6px}.player{grid-template-columns:30px minmax(0,1fr) auto}.number{font-size:12px}}
 </style></head><body><div class="gfx stage">
-<div class="header"><div class="team"><div id="logoA" class="fallback">A</div><div id="teamAName" class="teamname">KOTI</div></div><div class="mid">KOKOONPANOT</div><div class="team b"><div id="teamBName" class="teamname">VIERAS</div><div id="logoB" class="fallback">B</div></div></div>
+<div class="header"><div class="team"><div id="logoA" class="fallback">A</div><div id="teamAName" class="teamname">KOTI</div></div><div class="mid">KOKOON-<br>PANOT</div><div class="team b"><div id="teamBName" class="teamname">VIERAS</div><div id="logoB" class="fallback">B</div></div></div>
 <div class="cols"><section class="roster"><div class="roster-title"><span id="titleA">KOTI</span><span id="countA">PELAAJAT</span></div><div id="playersA" class="players"></div><div id="emptyA" class="empty hidden">Kokoonpanoa ei ole julkaistu.</div></section><section class="roster"><div class="roster-title"><span id="titleB">VIERAS</span><span id="countB">PELAAJAT</span></div><div id="playersB" class="players"></div><div id="emptyB" class="empty hidden">Kokoonpanoa ei ole julkaistu.</div></section></div>
 </div><div id="error" class="err hidden"></div>
 <script>
