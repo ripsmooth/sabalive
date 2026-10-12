@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Salibandy · Kentälliset</title>
+<style>
+:root{--ink:#101820;--panel:#1b2a35;--accent:#e8c547;--white:#fff;--muted:#bdc7d0;--scale:1;--fit-scale:1;--gfx-width:1200px;--offset-x:0px;--offset-y:0px}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;background:transparent;overflow:hidden}
+body{font-family:Arial,Helvetica,sans-serif;color:var(--white);font-variant-numeric:tabular-nums}
+.gfx{filter:drop-shadow(0 4px 12px rgba(0,0,0,.3));opacity:1;transition:opacity .25s ease}
+body.gfx-hidden .gfx{opacity:0;pointer-events:none}
+.hidden{display:none!important}
+.err{position:fixed;left:8px;bottom:8px;z-index:2147483647;max-width:calc(100vw - 16px);background:rgba(16,24,32,.97);border-left:4px solid var(--accent);padding:10px 14px;color:#fff;font-size:14px}
+.stage{position:fixed;left:calc(50% + var(--offset-x));top:calc(50% + var(--offset-y));width:var(--gfx-width);max-width:none;transform:translate(-50%,-50%) scale(var(--fit-scale));transform-origin:center center}
+.header{height:112px;display:grid;grid-template-columns:minmax(0,1fr) 190px minmax(0,1fr);background:var(--ink);border-bottom:4px solid var(--accent);overflow:hidden}
+.head-team{min-width:0;display:flex;align-items:center;gap:12px;padding:10px 18px;background:#141d25}
+.head-team.b{justify-content:flex-end}
+.club-logo{width:54px;height:54px;flex:0 0 54px;object-fit:contain}
+.head-name{min-width:0;flex:1 1 auto;font-size:clamp(20px,2vw,30px);font-weight:900;text-transform:uppercase;line-height:1.02;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere}
+.kit{width:58px;height:78px;flex:0 0 58px;object-fit:contain}
+.kit-fallback{width:58px;height:70px;flex:0 0 58px;display:flex;align-items:center;justify-content:center;border:2px solid #43515b;background:#23313a;color:var(--muted);font-size:11px;font-weight:900;text-align:center}
+.mid{display:flex;align-items:center;justify-content:center;text-align:center;background:var(--accent);color:var(--ink);font-size:24px;line-height:1;font-weight:900;text-transform:uppercase;letter-spacing:.025em;padding:8px}
+.columns{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin-top:10px;align-items:start}
+.team-card{min-width:0;background:rgba(16,24,32,.97);border-top:3px solid var(--accent);border-left:1px solid #2e3b45;border-right:1px solid #2e3b45}
+.team-title{background:var(--panel);min-height:39px;padding:9px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:16px;font-weight:900;text-transform:uppercase;letter-spacing:.035em}
+.team-title .count{color:var(--accent);font-size:11px;white-space:nowrap}
+.group{padding:0 12px 4px}
+.group-title{margin-top:8px;min-height:29px;display:flex;align-items:center;justify-content:center;text-align:center;background:#24323c;border-bottom:2px solid var(--accent);color:#fff;font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.035em;padding:5px 8px}
+.player-row{min-height:30px;display:grid;grid-template-columns:38px minmax(0,1fr) auto;gap:8px;align-items:center;padding:3px 6px;border-bottom:1px solid #2f414c;background:#141e26;font-size:14px;line-height:1.1}
+.player-row:nth-child(odd){background:#192630}
+.number{min-height:23px;display:flex;align-items:center;justify-content:center;background:var(--accent);color:var(--ink);font-weight:900;font-size:13px;clip-path:polygon(0 0,100% 0,86% 100%,0 100%);padding:0 3px}
+.player-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px;font-weight:800}
+.right-tags{display:flex;align-items:center;gap:7px;white-space:nowrap}
+.position{font-size:10px;color:var(--muted);font-weight:900}
+.captain{color:var(--accent);font-size:10px;font-weight:900}
+.group-empty{padding:9px 8px;color:var(--muted);font-size:12px;font-style:italic}
+.staff{margin:8px 12px 12px;border-top:2px solid var(--accent);background:#141e26}
+.staff-title{padding:7px 10px;background:#24323c;text-align:center;font-size:12px;font-weight:900;letter-spacing:.04em;text-transform:uppercase}
+.staff-list{display:grid;grid-template-columns:1fr 1fr;gap:0 8px;padding:4px 10px 8px}
+.staff-item{min-width:0;padding:5px 0;border-bottom:1px solid #2c3b45;font-size:11px;line-height:1.2}
+.staff-role{color:var(--accent);font-size:9px;font-weight:800;text-transform:uppercase;display:block;margin-bottom:2px}
+.foot{height:4px;background:var(--accent)}
+@media(max-width:760px){.header{height:82px;grid-template-columns:minmax(0,1fr) 110px minmax(0,1fr)}.head-team{gap:7px;padding:6px}.club-logo{width:36px;height:36px;flex-basis:36px}.kit,.kit-fallback{width:34px;height:49px;flex-basis:34px}.head-name{font-size:13px}.mid{font-size:15px}.columns{gap:6px}.team-title{padding:7px;font-size:11px}.team-title .count{font-size:9px}.group{padding:0 5px 3px}.group-title{font-size:10px;min-height:25px}.player-row{grid-template-columns:28px minmax(0,1fr) auto;gap:4px;padding:2px 3px;min-height:25px}.number{font-size:11px}.player-name{font-size:11px}.position,.captain{font-size:8px}.staff{margin:5px}.staff-list{grid-template-columns:1fr;padding:3px 7px}}
+</style>
+</head>
+<body>
+<div class="gfx stage" id="stage">
+ <header class="header">
+  <div class="head-team a"><img id="logoA" class="club-logo" alt=""><div id="teamAName" class="head-name">KOTI</div><img id="kitA" class="kit hidden" alt="Pelipaita"></div>
+  <div class="mid">KENTÄLLISET</div>
+  <div class="head-team b"><img id="kitB" class="kit hidden" alt="Pelipaita"><div id="teamBName" class="head-name">VIERAS</div><img id="logoB" class="club-logo" alt=""></div>
+ </header>
+ <div class="columns">
+  <section class="team-card" aria-label="Kotijoukkueen kentälliset"><div class="team-title"><span id="titleA">KOTI</span><span id="countA" class="count">0 PELAAJAA</span></div><div id="groupsA"></div><div id="staffA" class="staff hidden"></div></section>
+  <section class="team-card" aria-label="Vierasjoukkueen kentälliset"><div class="team-title"><span id="titleB">VIERAS</span><span id="countB" class="count">0 PELAAJAA</span></div><div id="groupsB"></div><div id="staffB" class="staff hidden"></div></section>
+ </div>
+ <div class="foot"></div>
+</div>
+<div id="error" class="err hidden"></div>
+<script>
+'use strict';
+const q=new URLSearchParams(location.search);
+let matchId=q.get('match_id')||q.get('ottelu')||q.get('match')||'';
+let defaultMatchPromise=null;
+async function ensureMatchId(){if(matchId)return matchId;if(!defaultMatchPromise)defaultMatchPromise=fetch('/api/salibandy-default-match',{cache:'no-store'}).then(r=>r.json()).then(d=>{matchId=String(d.match_id||'953141');return matchId}).catch(()=>{matchId='953141';return matchId});return defaultMatchPromise}
+const refresh=Math.max(3,Math.min(60,Number(q.get('refresh')||3)));
+const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
+const numeric=(key,fallback,min,max)=>{const raw=String(q.get(key)??'').trim();const n=Number(raw);return raw!==''&&Number.isFinite(n)?clamp(n,min,max):fallback};
+const preferredScale=numeric('scale',1,.5,2.5);
+const width=numeric('width',1200,640,2400);
+const requestedHeight=numeric('height',0,100,2160);
+const offsetX=numeric('offsetX',0,-3000,3000),offsetY=numeric('offsetY',0,-3000,3000);
+document.documentElement.style.setProperty('--gfx-width',width+'px');
+document.documentElement.style.setProperty('--offset-x',offsetX+'px');
+document.documentElement.style.setProperty('--offset-y',offsetY+'px');
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const teamFields=m=>({a:{id:String(m.team_A_id||''),name:m.team_A_name||m.club_A_name||'KOTI',logo:m.club_A_crest||m.team_A_crest||''},b:{id:String(m.team_B_id||''),name:m.team_B_name||m.club_B_name||'VIERAS',logo:m.club_B_crest||m.team_B_crest||''}});
+function showError(err){const e=$('error');e.textContent='Salibandy: '+(err?.message||err);e.classList.remove('hidden')}
+function clearError(){$('error').classList.add('hidden')}
+async function getMatch(){await ensureMatchId();const u=new URL('/api/salibandy-match',location.origin);u.searchParams.set('match_id',matchId);u.searchParams.set('timeStamp',Date.now());const r=await fetch(u,{cache:'no-store'});const d=await r.json();if(!r.ok)throw Error(d?.error||('API vastasi '+r.status));if(d.call?.status&&d.call.status!=='ok')throw Error('TorneoPal: '+d.call.status);if(!d.match)throw Error('Ottelutietoja ei löytynyt.');return d.match}
+function putLogo(id,url,name){const e=$(id);e.classList.remove('hidden');if(url&&/^https?:\/\//i.test(url)){e.src=url;e.alt=name||'';e.onerror=()=>{e.classList.add('hidden')}}else e.classList.add('hidden')}
+function putKit(id,url){const e=$(id);if(url&&/^https?:\/\//i.test(url)){e.src=url;e.classList.remove('hidden');e.onerror=()=>e.classList.add('hidden')}else e.classList.add('hidden')}
+function getRole(p){const raw=String(p.position_fi||p.position||p.position_en||'').trim().toUpperCase();if(!raw)return {raw:'',role:'',line:0};const m=raw.match(/^([^/]+)\s*\/\s*(\d+)$/);return m?{raw,role:m[1].trim(),line:Number(m[2])}:{raw,role:raw.split('/')[0].trim(),line:0}}
+const ROLE_ORDER={VL:1,KH:2,OL:3,VP:4,OP:5};
+function organize(players){const lines=new Map(),goalies=[],other=[];for(const p of players){const r=getRole(p);const item={...p,_role:r.role,_line:r.line};if(r.role==='MV'||/MAALIVAHTI|GOALKEEPER/.test(r.role)){goalies.push(item)}else if(r.line>0){if(!lines.has(r.line))lines.set(r.line,[]);lines.get(r.line).push(item)}else other.push(item)}
+ const sorter=(a,b)=>(ROLE_ORDER[a._role]||99)-(ROLE_ORDER[b._role]||99)||Number(a.pos_id||0)-Number(b.pos_id||0)||String(a.player_name||'').localeCompare(String(b.player_name||''),'fi');
+ for(const arr of lines.values())arr.sort(sorter);goalies.sort((a,b)=>Number(a.pos_id||0)-Number(b.pos_id||0)||Number(a.shirt_number||0)-Number(b.shirt_number||0));other.sort((a,b)=>Number(a.pos_id||0)-Number(b.pos_id||0));
+ return {lines:[...lines.entries()].sort((a,b)=>a[0]-b[0]),goalies,other};}
+function addGroup(host,title,players,opts={}){const group=document.createElement('div');group.className='group';const h=document.createElement('div');h.className='group-title';h.textContent=title;group.append(h);if(!players.length){const empty=document.createElement('div');empty.className='group-empty';empty.textContent=opts.emptyText||'Ei pelaajia ilmoitettu.';group.append(empty)}else for(const p of players){const row=document.createElement('div');row.className='player-row';const n=document.createElement('div');n.className='number';n.textContent=p.shirt_number||'—';const name=document.createElement('div');name.className='player-name';name.textContent=p.player_name||[p.first_name,p.last_name].filter(Boolean).join(' ')||'Tuntematon pelaaja';const tags=document.createElement('div');tags.className='right-tags';if(p._role){const pos=document.createElement('span');pos.className='position';pos.textContent=p._role;tags.append(pos)}const cap=String(p.captain||'').toUpperCase();if(cap==='C'||cap==='A'){const marker=document.createElement('span');marker.className='captain';marker.textContent=cap;tags.append(marker)}row.append(n,name,tags);group.append(row)}host.append(group)}
+function renderTeam(side,players,officials){const host=$('groups'+side);host.replaceChildren();const grouped=organize(players);if(!players.length){addGroup(host,'KENTÄLLISET',[],{emptyText:'Kentällisiä ei ole julkaistu.'});return}
+ if(grouped.lines.length){for(const [number,arr] of grouped.lines)addGroup(host,number+'. KENTÄLLINEN',arr)}
+ if(grouped.goalies.length)addGroup(host,'MAALIVAHDIT',grouped.goalies);
+ if(grouped.other.length)addGroup(host,grouped.lines.length?'MUUT PELAAJAT':'PELAAJAT',grouped.other);
+ if(!grouped.lines.length&&!grouped.goalies.length&&!grouped.other.length)addGroup(host,'KENTÄLLISET',[],{emptyText:'Kentällisiä ei ole julkaistu.'});
+ const st=$('staff'+side);st.replaceChildren();const valid=(Array.isArray(officials)?officials:[]).filter(o=>String(o.name||o.official_name||'').trim());if(!valid.length){st.classList.add('hidden');return}st.classList.remove('hidden');const title=document.createElement('div');title.className='staff-title';title.textContent='TOIMIHENKILÖT';const list=document.createElement('div');list.className='staff-list';for(const o of valid){const item=document.createElement('div');item.className='staff-item';const role=document.createElement('span');role.className='staff-role';role.textContent=o.official_role||o.role_name||'Toimihenkilö';const name=document.createElement('span');name.textContent=o.name||o.official_name;item.append(role,name);list.append(item)}st.append(title,list)}
+async function update(){try{const m=await getMatch();const t=teamFields(m);$('teamAName').textContent=t.a.name;$('teamBName').textContent=t.b.name;$('titleA').textContent=t.a.name;$('titleB').textContent=t.b.name;putLogo('logoA',t.a.logo,t.a.name);putLogo('logoB',t.b.logo,t.b.name);const kits=Array.isArray(m.kits)?m.kits:[];const kitFor=id=>{const arr=kits.filter(k=>String(k.team_id)===String(id)&&String(k.kit_type||'outfield').toLowerCase()==='outfield');return (arr.find(k=>String(k.kit_preference||'').toLowerCase()==='primary')||arr[0]||{}).front||''};putKit('kitA',kitFor(t.a.id));putKit('kitB',kitFor(t.b.id));const all=Array.isArray(m.lineups)?m.lineups:[];const a=all.filter(p=>String(p.team_id)===t.a.id),b=all.filter(p=>String(p.team_id)===t.b.id);const officialArr=Array.isArray(m.lineup_officials)?m.lineup_officials:[];renderTeam('A',a,officialArr.filter(o=>String(o.team_id)===t.a.id));renderTeam('B',b,officialArr.filter(o=>String(o.team_id)===t.b.id));$('countA').textContent=a.length+' PELAAJAA';$('countB').textContent=b.length+' PELAAJAA';clearError();scheduleFit()}catch(e){showError(e)}}
+function scheduleFit(){requestAnimationFrame(fitStage)}
+function fitStage(){const stage=$('stage');if(!stage)return;stage.style.setProperty('--fit-scale','1');const rawHeight=Math.max(stage.scrollHeight,stage.getBoundingClientRect().height);const availW=Math.max(320,window.innerWidth*.96);const availH=Math.max(240,Math.min(window.innerHeight*.94,requestedHeight||window.innerHeight*.94));const fit=Math.min(preferredScale,availW/width,availH/rawHeight);stage.style.setProperty('--fit-scale',String(clamp(fit,.35,preferredScale)));if(q.get('debug')==='1'){let d=$('debugBox');if(!d){d=document.createElement('div');d.id='debugBox';d.style.cssText='position:fixed;left:8px;top:8px;background:#101820;color:#fff;border:1px solid #e8c547;padding:6px;font:12px Arial;z-index:99999';document.body.append(d)}d.textContent='Kentälliset · '+Math.round(width*fit)+'×'+Math.round(rawHeight*fit)+' px'}}
+async function updateVisibility(){try{const r=await fetch('/api/salibandy-graphics-state',{cache:'no-store'});if(!r.ok)return;const state=await r.json();document.body.classList.toggle('gfx-hidden',state.lines!==true)}catch{}}
+function startVisibility(){if(q.get('remote')!=='1'){document.body.classList.remove('gfx-hidden');return}document.body.classList.add('gfx-hidden');updateVisibility();setInterval(updateVisibility,2000)}
+window.addEventListener('resize',scheduleFit);
+if(q.get('preview')==='1'){
+ const demoPlayers=[];function demo(team_id,values){for(const [num,name,pos,captain=''] of values)demoPlayers.push({team_id,shirt_number:String(num),player_name:name,position:pos,captain,pos_id:String(demoPlayers.length)})}
+ demo('A',[[58,'Alatalo Paulus','VL/1'],[15,'Suutari Niko','KH/1'],[63,'Turppa Tapias','OL/1'],[81,'Kallinki Miro','VP/1'],[8,'Mäntymää Mikael','OP/1'],[58,'Uotinen Zac','VL/2'],[27,'Jokiaho Luukas','KH/2'],[61,'Autio Miro','OL/2'],[86,'Kantola Rasmus','VP/2'],[13,'Suominen Juho','OP/2'],[62,'Toppari Elias','VL/3'],[3,'Piirainen Akseli','KH/3'],[26,'Holopainen Eemeli','OL/3'],[99,'Lehtikevari Miika','VP/3'],[95,'Auranen Elton','OP/3'],[1,'Knaapila Luukas','MV/1','C'],[68,'Svan Viktor','MV/2']]);
+ demo('B',[[95,'Salmi Jere','VL/1'],[98,'Mäkipörhölä Jimi','KH/1'],[11,'Kvist Eemeli','OL/1','A'],[40,'Sifis Thomas','VP/1'],[90,'Kvist Kasperi','OP/1','A'],[27,'Nieminen Aatu','VL/2'],[96,'Seikkula Mico','KH/2'],[73,'Rautio Leevi','OL/2'],[41,'Sörmlund Nätkynki','VP/2'],[17,'Pallari Leo','OP/2'],[25,'Pirnes Matias','VL/3'],[30,'Sökkinen Aleksi','KH/3'],[51,'Siirtola Oskari','OL/3'],[26,'Järvenpää Niklas','VP/3'],[91,'Öfverberg Noel','OP/3'],[71,'Aloaja Lassi','VP/4'],[88,'Marjetta Niko','MV/1'],[99,'Ollikainen Roope','MV/2']]);
+ const fake={team_A_id:'A',team_A_name:'SB Vaasa/NJ',club_A_name:'SB Vaasa/NJ',club_A_crest:'',team_B_id:'B',team_B_name:'Sastamolo',club_B_name:'Sastamolo',lineups:demoPlayers,kits:[],lineup_officials:[{team_id:'A',official_role:'Valmentaja',name:'Esimerkkivalmentaja'},{team_id:'B',official_role:'Valmentaja',name:'Esimerkkivalmentaja'}]};
+ const t=teamFields(fake);$('teamAName').textContent=t.a.name;$('teamBName').textContent=t.b.name;$('titleA').textContent=t.a.name;$('titleB').textContent=t.b.name;const all=fake.lineups;renderTeam('A',all.filter(p=>p.team_id==='A'),fake.lineup_officials.filter(o=>o.team_id==='A'));renderTeam('B',all.filter(p=>p.team_id==='B'),fake.lineup_officials.filter(o=>o.team_id==='B'));$('countA').textContent='17 PELAAJAA';$('countB').textContent='18 PELAAJAA';scheduleFit();
+}else {update();setInterval(update,refresh*1000)}
+startVisibility();scheduleFit();
+</script>
+</body></html>

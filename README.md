@@ -179,3 +179,7 @@ Oletusleveydet: tulostaulu 575 px; tehopelaajat 575 px; tilastot 1400 px; Lower 
 - Pelaajien nimitekstit ovat 18,2 px normaalissa näkymässä (14 px × 1,3) ja 15,6 px kapeassa näkymässä (12 px × 1,3).
 - Tulostaulun oletussiirto ilman URL-parametreja on X=40 px, Y=30 px. Tehopelaajien oletussiirto on X=40 px, Y=90 px. Korjaus estää `Number(null)`-muunnosta muuttamasta puuttuvaa parametria nollaksi.
 - Huomaa: jos OBS:n vanha selainlähteen URL sisältää nimenomaan `width=1400` tai `offsetX=0&offsetY=0`, nuo eksplisiittiset arvot ohittavat oletukset. Päivitä URL ohjauspaneelista tai poista/korvaa vanhat parametrit.
+
+## Kentälliset-grafiikka
+
+`salibandy-kentalliset.html` näyttää ottelun kentälliset joukkueittain. Pelaajat ryhmitellään TorneoPalin `position`-kentän rivinumeron mukaan (esim. `VL/1`, `KH/1`), maalivahdit erotellaan omaksi ryhmäkseen, ja mukana ovat myös kokoonpanon toimihenkilöt sekä peliasutiedot, jos rajapinta palauttaa ne. Osoitteeseen voi lisätä `?match_id=939044`, `?width=1200`, `?height=1000`, `?scale=1`, `?offsetX=0&offsetY=0` tai `?preview=1` testidataa varten. Näkyvyyden etäohjaus käyttää omaa `lines`-avainta.
