@@ -1,6 +1,6 @@
 <!doctype html><html lang="fi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Salibandy · Tilastot</title><style>
 
-:root{--ink:#101820;--panel:#1b2a35;--accent:#e8c547;--white:#fff;--muted:#bdc7d0;--scale:1;--gfx-width:1400px}
+:root{--ink:#101820;--panel:#1b2a35;--accent:#e8c547;--white:#fff;--muted:#bdc7d0;--scale:1;--gfx-width:1200px}
 *{box-sizing:border-box}
 html,body{margin:0;width:100%;height:100%;background:transparent;overflow:hidden}
 body{font-family:Arial,Helvetica,sans-serif;color:var(--white);font-variant-numeric:tabular-nums}
@@ -43,7 +43,7 @@ const refresh=Math.max(3,Math.min(60,Number(q.get('refresh')||3)));
 const offsetX=Number.isFinite(Number(q.get('offsetX')))?Number(q.get('offsetX')):0;
 const offsetY=Number.isFinite(Number(q.get('offsetY')))?Number(q.get('offsetY')):0;
 const scale=Math.max(.5,Math.min(2.5,Number(q.get('scale')||1)));
-const width=Math.max(500,Math.min(1920,Number(q.get('width')||1400)));
+const width=Math.max(500,Math.min(1920,Number(q.get('width')||1200)));
 document.documentElement.style.setProperty('--offset-x',offsetX+'px');
 document.documentElement.style.setProperty('--offset-y',offsetY+'px');
 document.documentElement.style.setProperty('--scale',scale);
@@ -101,7 +101,7 @@ startVisibility('stats',false);update();setInterval(update,refresh*1000);
   const sizeParams = new URLSearchParams(window.location.search);
   const sizeStage = document.querySelector('.stage');
   if (!sizeStage) return;
-  const defaultWidth = 1400;
+  const defaultWidth = 1200;
   const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
   const queryNumber = (key, fallback, min, max) => {
     if (!sizeParams.has(key)) return fallback;
