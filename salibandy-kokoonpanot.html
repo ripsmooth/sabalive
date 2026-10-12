@@ -1,10 +1,10 @@
 <!doctype html><html lang="fi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Salibandy · Kokoonpanot</title><style>
 
-:root{--ink:#101820;--panel:#1b2a35;--accent:#e8c547;--white:#fff;--muted:#bdc7d0;--scale:1;--gfx-width:1200px}
+:root{--ink:#101820;--panel:#1b2a35;--accent:#e8c547;--white:#fff;--muted:#bdc7d0;--scale:1;--gfx-width:840px}
 *{box-sizing:border-box}
 html,body{margin:0;width:100%;height:100%;background:transparent;overflow:hidden}
 body{font-family:Arial,Helvetica,sans-serif;color:var(--white);font-variant-numeric:tabular-nums}
-.gfx{opacity:1;transition:opacity .45s ease-in-out;will-change:opacity;filter:drop-shadow(0 4px 8px rgba(0,0,0,.3))}
+.gfx{opacity:1;transition:opacity .45s ease-in-out;will-change:opacity;filter:drop-shadow(0 4px 12px rgba(0,0,0,.3))}
 body.gfx-hidden .gfx{opacity:0;pointer-events:none}
 .hidden{display:none!important}
 .err{position:fixed;left:8px;bottom:8px;background:rgba(16,24,32,.96);border-left:4px solid var(--accent);padding:10px 14px;color:#fff;font-size:14px;max-width:calc(100vw - 16px)}
@@ -14,16 +14,16 @@ body.gfx-hidden .gfx{opacity:0;pointer-events:none}
 .stage{position:fixed;left:calc(50% + var(--offset-x));top:calc(50% + var(--offset-y));width:var(--gfx-width);max-width:none;transform:translate(-50%,-50%) scale(var(--scale), var(--scale-y, var(--scale)));transform-origin:center center}
 .header{height:112px;display:grid;grid-template-columns:minmax(0,1fr) 250px minmax(0,1fr);align-items:stretch;background:var(--accent);border-bottom:4px solid var(--accent)}
 .team{display:flex;align-items:center;gap:17px;padding:12px 24px;min-width:0;background:rgba(16,24,32,.98)}.team.b{flex-direction:row-reverse;text-align:right}
-.logo{width:70px;height:70px;flex:0 0 70px}.fallback{width:70px;height:70px;font-size:22px}
-.teamname{font-size:clamp(18px,2vw,31px);font-weight:900;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.mid{display:flex;align-items:center;justify-content:center;background:var(--accent);color:var(--ink);font-size:26px;font-weight:900;text-transform:uppercase;text-align:center;clip-path:polygon(9% 0,91% 0,100% 100%,0 100%);padding:8px}
+.logo{width:72px;height:72px;flex:0 0 72px}.fallback{width:72px;height:72px;font-size:22px}
+.teamname{font-size:clamp(20px,2vw,34px);font-weight:900;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mid{display:flex;align-items:center;justify-content:center;background:var(--accent);color:var(--ink);font-size:27px;font-weight:900;text-transform:uppercase;text-align:center;clip-path:polygon(9% 0,91% 0,100% 100%,0 100%);padding:8px}
 .cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
 .roster{background:rgba(16,24,32,.97);border-top:3px solid var(--accent);min-width:0;overflow:visible}
-.roster-title{background:var(--panel);padding:11px 18px;display:flex;justify-content:space-between;font-size:16px;font-weight:900;text-transform:uppercase;letter-spacing:.04em}
+.roster-title{background:var(--panel);padding:11px 18px;display:flex;justify-content:space-between;font-size:17px;font-weight:900;text-transform:uppercase;letter-spacing:.04em}
 .roster-title span:last-child{color:var(--accent);font-size:12px}
-.players{padding:7px 14px 12px;display:grid;grid-template-columns:minmax(0,1fr);gap:0}
-.player{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:8px;align-items:center;min-height:30px;border-bottom:1px solid #34434d;padding:2px 1px}
-.number{display:flex;justify-content:center;align-items:center;background:var(--accent);color:var(--ink);font-size:15px;font-weight:900;min-height:25px;clip-path:polygon(0 0,100% 0,86% 100%,0 100%)}
+.players{padding:8px 14px 14px;display:grid;grid-template-columns:minmax(0,1fr);gap:5px}
+.player{display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:8px;align-items:center;min-height:35px;border-bottom:1px solid #34434d;padding:2px 1px}
+.number{display:flex;justify-content:center;align-items:center;background:var(--accent);color:var(--ink);font-size:16px;font-weight:900;min-height:25px;clip-path:polygon(0 0,100% 0,86% 100%,0 100%)}
 .pname{font-size:17px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tag{color:var(--accent);font-size:10px;font-weight:900;white-space:nowrap}
 .empty{padding:18px;color:var(--muted);font-size:14px}
@@ -41,7 +41,7 @@ const refresh=Math.max(3,Math.min(60,Number(q.get('refresh')||3)));
 const offsetX=q.has('offsetX')&&String(q.get('offsetX')).trim()!==''&&Number.isFinite(Number(q.get('offsetX')))?Number(q.get('offsetX')):0;
 const offsetY=q.has('offsetY')&&String(q.get('offsetY')).trim()!==''&&Number.isFinite(Number(q.get('offsetY')))?Number(q.get('offsetY')):0;
 const scale=Math.max(.5,Math.min(2.5,Number(q.get('scale')||1)));
-const width=Math.max(240,Math.min(2400,Number(q.get('width')||1200)));
+const width=Math.max(240,Math.min(2400,Number(q.get('width')||840)));
 document.documentElement.style.setProperty('--offset-x',offsetX+'px');
 document.documentElement.style.setProperty('--offset-y',offsetY+'px');
 document.documentElement.style.setProperty('--scale',scale);
@@ -64,7 +64,7 @@ async function update(){try{const m=await getMatch(),t=teamFields(m);setLogo('lo
 startVisibility('lineups',false);update();setInterval(update,refresh*1000);
 </script>
 <script>
-/* Kokoonpanot keskelle ruutua. Oletusleveys 1200 px; pelaajanimet 17 px.
+/* Kokoonpanot keskelle ruutua. Oletusleveys 840 px; Bandylive-mitoitus.
    Jos kumpi tahansa kokoonpano on pitkä, skaalataan KOKO grafiikkaa tasaisesti
    niin, että kaikki pelaajarivit mahtuvat selainlähteeseen. */
 (function applyLineupDimensions(){
@@ -78,7 +78,7 @@ startVisibility('lineups',false);update();setInterval(update,refresh*1000);
     const n=Number(raw);
     return raw!==''&&Number.isFinite(n)&&n>0?clamp(n,min,max):fallback;
   };
-  const baseWidth=read('width',1200,240,2400);
+  const baseWidth=read('width',840,240,2400);
   const requestedHeight=read('height',null,40,2160);
   const preferredScale=read('scale',1,0.5,2.5);
   const offsetXRaw=String(params.get('offsetX')||'').trim();
