@@ -1,6 +1,6 @@
 <!doctype html><html lang="fi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Salibandy · Kokoonpanot</title><style>
 
-:root{--ink:#101820;--panel:#1b2a35;--accent:#e8c547;--white:#fff;--muted:#bdc7d0;--scale:1;--gfx-width:840px}
+:root{--ink:#101820;--panel:#1b2a35;--accent:#e8c547;--white:#fff;--muted:#bdc7d0;--scale:1;--gfx-width:940px}
 *{box-sizing:border-box}
 html,body{margin:0;width:100%;height:100%;background:transparent;overflow:hidden}
 body{font-family:Arial,Helvetica,sans-serif;color:var(--white);font-variant-numeric:tabular-nums}
@@ -41,7 +41,7 @@ const refresh=Math.max(3,Math.min(60,Number(q.get('refresh')||3)));
 const offsetX=q.has('offsetX')&&String(q.get('offsetX')).trim()!==''&&Number.isFinite(Number(q.get('offsetX')))?Number(q.get('offsetX')):0;
 const offsetY=q.has('offsetY')&&String(q.get('offsetY')).trim()!==''&&Number.isFinite(Number(q.get('offsetY')))?Number(q.get('offsetY')):0;
 const scale=Math.max(.5,Math.min(2.5,Number(q.get('scale')||1)));
-const width=Math.max(240,Math.min(2400,Number(q.get('width')||840)));
+const width=Math.max(240,Math.min(2400,Number(q.get('width')||940)));
 document.documentElement.style.setProperty('--offset-x',offsetX+'px');
 document.documentElement.style.setProperty('--offset-y',offsetY+'px');
 document.documentElement.style.setProperty('--scale',scale);
@@ -64,7 +64,7 @@ async function update(){try{const m=await getMatch(),t=teamFields(m);setLogo('lo
 startVisibility('lineups',false);update();setInterval(update,refresh*1000);
 </script>
 <script>
-/* Kokoonpanot keskelle ruutua. Oletusleveys 840 px; Bandylive-mitoitus.
+/* Kokoonpanot keskelle ruutua. Oletusleveys 940 px; Bandylive-mitoitus.
    Jos kumpi tahansa kokoonpano on pitkä, skaalataan KOKO grafiikkaa tasaisesti
    niin, että kaikki pelaajarivit mahtuvat selainlähteeseen. */
 (function applyLineupDimensions(){
@@ -78,7 +78,7 @@ startVisibility('lineups',false);update();setInterval(update,refresh*1000);
     const n=Number(raw);
     return raw!==''&&Number.isFinite(n)&&n>0?clamp(n,min,max):fallback;
   };
-  const baseWidth=read('width',840,240,2400);
+  const baseWidth=read('width',940,240,2400);
   const requestedHeight=read('height',null,40,2160);
   const preferredScale=read('scale',1,0.5,2.5);
   const offsetXRaw=String(params.get('offsetX')||'').trim();
