@@ -56,15 +56,46 @@ export default async function handler(req, res) {
       return res.status(502).json({ error: "TorneoPal ei palauttanut kelvollista getScore-JSON-dataa.", elapsedMs });
     }
 
-    if (!data.score || data.call?.status !== "ok") {
+    // getScore's documented response example contains a top-level `score`
+    // object without necessarily including a `call.status` wrapper. Only reject
+    // an explicit upstream error; absence of `call` is not itself an error.
+    if (data.call?.status && data.call.status !== "ok") {
       return res.status(502).json({
-        error: "TorneoPalin getScore-vastauksesta puuttuu tulostieto.",
-        detail: data.call?.status || "tuntematon vastaus",
+        error: "TorneoPal ilmoitti getScore-kutsun epäonnistuneen.",
+        detail: data.call.status,
+        rootKeys: Object.keys(data).slice(0, 30),
+        responsePreview: JSON.stringify(data).slice(0, 1200),
         elapsedMs
       });
     }
 
-    return res.status(200).json({ ...data, _sabalive: { elapsedMs, fetchedAt: new Date().toISOString() } });
+    // The documented response is { score: { ... } }. Some deployments or
+    // proxy layers may return the score fields directly, so accept that form
+    // only when recognizable score fields are actually present.
+    const score = data.score && typeof data.score === "object"
+      ? data.score
+      : (Object.prototype.hasOwnProperty.call(data, "live_A") ||
+         Object.prototype.hasOwnProperty.call(data, "live_B") ||
+         Object.prototype.hasOwnProperty.call(data, "fs_A") ||
+         Object.prototype.hasOwnProperty.call(data, "fs_B"))
+        ? data
+        : null;
+
+    if (!score) {
+      return res.status(502).json({
+        error: "TorneoPalin getScore-vastauksesta ei löytynyt score-oliota eikä tunnistettavia tuloskenttiä.",
+        detail: data.call?.status || "vastausrakenne poikkeaa odotetusta",
+        rootKeys: Object.keys(data).slice(0, 30),
+        responsePreview: JSON.stringify(data).slice(0, 1200),
+        elapsedMs
+      });
+    }
+
+    const normalized = data.score && typeof data.score === "object"
+      ? data
+      : { score, call: data.call || { method: "getScore", status: "ok" } };
+
+    return res.status(200).json({ ...normalized, _sabalive: { elapsedMs, fetchedAt: new Date().toISOString() } });
   } catch {
     return res.status(502).json({ error: "Salibandyn TorneoPal getScore-yhteys epäonnistui." });
   }
