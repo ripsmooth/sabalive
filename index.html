@@ -27,6 +27,7 @@
 <a class="card" href="salibandy-otteluntapahtumat.html"><span class="tag">OBS</span><b>Ottelun tapahtumat</b><p>Maalit, rangaistukset ja aikalisät aikajärjestyksessä.</p></a>
 <a class="card" href="salibandy-tehopelaajat.html"><span class="tag">OBS</span><b>Ottelun tehopelaajat</b><p>Molempien joukkueiden maalit, syötöt ja tehopisteet kompaktissa grafiikassa.</p></a>
 <a class="card" href="#" id="apiTestLink"><span class="tag">API-testi</span><b>Testaa otteludata</b><p>Avaa TorneoPalin JSON-vastaus.</p></a>
+<a class="card" href="#" id="scoreApiTestLink"><span class="tag">Live-API-testi</span><b>Testaa nopea tulos</b><p>Avaa getScore-rajapinnan JSON-vastaus, joka sisältää tuloksen ja pelikellon.</p></a>
 </div>
 <section class="link-panel" aria-labelledby="directLinksTitle">
 <h2 id="directLinksTitle">Grafiikkojen suorat linkit</h2>
@@ -38,6 +39,7 @@ const form=document.getElementById('defaultMatchForm'),idInput=document.getEleme
 async function loadDefault(){try{const r=await fetch('/api/salibandy-default-match',{cache:'no-store'});const d=await r.json();if(!r.ok)throw Error(d.error||'Oletusottelun haku epäonnistui.');idInput.value=d.match_id||'953141';statusEl.textContent='Nykyinen oletusottelu: '+idInput.value}catch(e){statusEl.textContent=e.message||'Oletusottelun haku epäonnistui.'}}
 form.addEventListener('submit',async e=>{e.preventDefault();statusEl.textContent='Tallennetaan…';try{const r=await fetch('/api/salibandy-default-match',{method:'POST',headers:{'Content-Type':'application/json','X-Control-Password':passInput.value},body:JSON.stringify({match_id:idInput.value.trim()})});const d=await r.json();if(!r.ok)throw Error(d.error||'Tallennus epäonnistui.');statusEl.textContent='Tallennettu palvelimelle. Oletusottelu: '+d.match_id;passInput.value=''}catch(e){statusEl.textContent=e.message||'Tallennus epäonnistui.'}});
 document.getElementById('apiTestLink').addEventListener('click',async e=>{e.preventDefault();try{const r=await fetch('/api/salibandy-default-match',{cache:'no-store'}),d=await r.json();location.href='/api/salibandy-match?match_id='+encodeURIComponent(d.match_id||'953141')}catch{location.href='/api/salibandy-match?match_id=953141'}});
+document.getElementById('scoreApiTestLink').addEventListener('click',async e=>{e.preventDefault();try{const r=await fetch('/api/salibandy-default-match',{cache:'no-store'}),d=await r.json();location.href='/api/salibandy-score?match_id='+encodeURIComponent(d.match_id||'953141')}catch{location.href='/api/salibandy-score?match_id=953141'}});
 const graphicLinks=[
  ['Grafiikkaohjaus','salibandy-grafiikkaohjaus.html'],
  ['Tulostaulu','salibandy-tulostaulu.html'],
