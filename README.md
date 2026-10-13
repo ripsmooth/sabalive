@@ -183,3 +183,5 @@ Oletusleveydet: tulostaulu 575 px; tehopelaajat 575 px; tilastot 1400 px; Lower 
 ## Kentälliset-grafiikka
 
 `salibandy-kentalliset.html` näyttää ottelun kentälliset joukkueittain. Pelaajat ryhmitellään TorneoPalin `position`-kentän rivinumeron mukaan (esim. `VL/1`, `KH/1`), maalivahdit erotellaan omaksi ryhmäkseen, ja mukana ovat myös kokoonpanon toimihenkilöt sekä peliasutiedot, jos rajapinta palauttaa ne. Osoitteeseen voi lisätä `?match_id=939044`, `?width=1200`, `?height=1000`, `?scale=1`, `?offsetX=0&offsetY=0` tai `?preview=1` testidataa varten. Näkyvyyden etäohjaus käyttää omaa `lines`-avainta.
+
+- `salibandy-kuntopuntari.html`: Kuntopuntari-grafiikka näyttää molempien joukkueiden viisi viimeisintä pelattua ottelua sekä viisi kauden tehokkainta pistemiestä. Otteluhistoria ja pelaajatilastot haetaan TorneoPalin REST-rajapinnasta palvelinreitin `/api/salibandy-form` kautta. Grafiikan oletusleveys on 1200 px; `match_id`, `width`, `height`, `scale`, `offsetX`, `offsetY` ja `refresh` ovat säädettävissä URL-parametreilla. `?preview=1` näyttää esimerkkidatan ja `?remote=1` kytkee sivun ohjauspaneelin näkyvyystilaan.

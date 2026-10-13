@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Salibandy · Kuntopuntari</title>
+<style>
+:root{--ink:#101820;--panel:#1b2a35;--accent:#e8c547;--white:#fff;--muted:#bdc7d0;--scale:1;--fit-scale:1;--gfx-width:1200px;--offset-x:0px;--offset-y:0px}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;background:transparent;overflow:hidden}
+body{font-family:Arial,Helvetica,sans-serif;color:var(--white);font-variant-numeric:tabular-nums}
+.gfx{filter:drop-shadow(0 4px 12px rgba(0,0,0,.32));opacity:1;transition:opacity .25s ease}
+body.gfx-hidden .gfx{opacity:0;pointer-events:none}
+.hidden{display:none!important}
+.err{position:fixed;left:8px;bottom:8px;z-index:2147483647;max-width:calc(100vw - 16px);background:rgba(16,24,32,.97);border-left:4px solid var(--accent);padding:10px 14px;color:#fff;font-size:13px}
+.stage{position:fixed;left:calc(50% + var(--offset-x));top:calc(50% + var(--offset-y));width:var(--gfx-width);max-width:none;transform:translate(-50%,-50%) scale(var(--fit-scale));transform-origin:center center}
+.masthead{min-height:78px;display:grid;grid-template-columns:minmax(0,1fr) 190px minmax(0,1fr);background:var(--ink);border-bottom:4px solid var(--accent);overflow:hidden}
+.club{display:flex;min-width:0;align-items:center;gap:12px;padding:10px 18px;background:#141d25}
+.club.b{flex-direction:row-reverse;text-align:right}
+.logo,.logo-fallback{width:52px;height:52px;flex:0 0 52px;object-fit:contain;display:flex;align-items:center;justify-content:center}
+.logo-fallback{border:2px solid var(--accent);border-radius:50%;font-weight:900;color:var(--accent);font-size:16px}
+.club-name{min-width:0;flex:1 1 auto;font-size:clamp(18px,1.9vw,27px);line-height:1.05;font-weight:900;text-transform:uppercase;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere}
+.mast-title{display:flex;align-items:center;justify-content:center;text-align:center;background:var(--accent);color:var(--ink);padding:8px 12px;font-size:21px;line-height:1;font-weight:900;letter-spacing:.02em;text-transform:uppercase}
+.meta{display:flex;justify-content:center;align-items:center;gap:10px;padding:7px 12px;background:#1b2a35;border-bottom:1px solid #34434d;color:var(--muted);font-size:11px;font-weight:800;text-align:center;letter-spacing:.04em;text-transform:uppercase}
+.panels{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-top:12px;align-items:start}
+.team-panel{min-width:0;overflow:hidden;background:rgba(16,24,32,.98);border:1px solid #31424e;border-top:3px solid var(--accent)}
+.team-panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:39px;padding:8px 13px;background:var(--panel);border-bottom:1px solid #34434d}
+.team-panel-name{font-size:15px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.panel-note{color:var(--accent);font-size:10px;font-weight:900;letter-spacing:.04em;white-space:nowrap}
+.section-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 11px 7px;background:#202f39;border-bottom:1px solid #394955;color:#fff;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.04em}
+.section-head .hint{font-size:9px;color:var(--accent);font-weight:900;letter-spacing:0;white-space:nowrap}
+.match-list{padding:0 10px 7px}
+.match-row{min-height:31px;display:grid;grid-template-columns:55px minmax(0,1fr) 62px 25px;gap:5px;align-items:center;padding:3px 3px;border-bottom:1px solid #2c3b45;background:#141e26;font-size:11px;line-height:1.1}
+.match-row:nth-child(even){background:#192630}
+.match-date{color:var(--muted);font-size:10px;white-space:nowrap}
+.opponent{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:800}
+.score{font-size:12px;font-weight:900;white-space:nowrap;text-align:center}
+.outcome{display:flex;align-items:center;justify-content:center;width:22px;height:20px;border-radius:3px;background:#283943;color:#fff;font-size:10px;font-weight:900}
+.outcome.win{background:var(--accent);color:var(--ink)}
+.outcome.draw{background:#d5dce0;color:#18232c}
+.outcome.loss{background:#42515a;color:#fff}
+.empty{padding:12px;color:var(--muted);font-size:11px;font-style:italic}
+.scorer-table{padding:0 10px 9px}
+.scorer-columns,.scorer-row{display:grid;grid-template-columns:26px minmax(0,1fr) 37px 37px 42px;gap:4px;align-items:center;padding:0 4px}
+.scorer-columns{height:25px;background:#24323c;color:var(--muted);border-bottom:1px solid #47545d;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.03em}
+.scorer-columns span:nth-child(n+3){text-align:right}
+.scorer-row{min-height:27px;background:#141e26;border-bottom:1px solid #2c3b45;font-size:11px}
+.scorer-row:nth-child(odd){background:#192630}
+.rank{color:var(--muted);font-size:10px;font-weight:900}
+.scorer-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:800}
+.scorer-stat{text-align:right;white-space:nowrap;color:#e4e9ec;font-size:10px}
+.scorer-points{text-align:right;white-space:nowrap;color:var(--accent);font-size:13px;font-weight:900}
+.foot{height:4px;background:var(--accent)}
+.debug{position:fixed;left:8px;top:8px;background:#101820;color:#fff;border:1px solid var(--accent);padding:6px 8px;font:12px Arial;z-index:99999}
+@media(max-width:700px){.masthead{grid-template-columns:minmax(0,1fr) 110px minmax(0,1fr);min-height:65px}.club{gap:6px;padding:7px}.logo,.logo-fallback{width:32px;height:32px;flex-basis:32px}.club-name{font-size:14px}.mast-title{font-size:15px;padding:6px}.panels{gap:6px;margin-top:7px}.team-panel-head{padding:7px}.team-panel-name{font-size:12px}.panel-note{font-size:8px}.match-list,.scorer-table{padding-left:4px;padding-right:4px}.match-row{grid-template-columns:42px minmax(0,1fr) 48px 21px;gap:3px;padding-left:1px;padding-right:1px;font-size:9px}.match-date{font-size:8px}.score{font-size:10px}.outcome{width:19px;height:18px;font-size:9px}.section-head{padding:7px;font-size:9px}.section-head .hint{font-size:8px}.scorer-columns,.scorer-row{grid-template-columns:19px minmax(0,1fr) 27px 27px 31px;gap:2px;padding:0 2px}.scorer-columns{font-size:8px}.scorer-row{font-size:9px}.scorer-stat{font-size:9px}.scorer-points{font-size:11px}}
+</style>
+</head>
+<body>
+<div class="gfx stage" id="stage">
+  <header class="masthead">
+    <div class="club a"><div id="logoA" class="logo-fallback">A</div><div id="nameA" class="club-name">KOTI</div></div>
+    <div class="mast-title">KUNTOPUNTARI</div>
+    <div class="club b"><div id="logoB" class="logo-fallback">B</div><div id="nameB" class="club-name">VIERAS</div></div>
+  </header>
+  <div class="meta"><span id="competition">SALIBANDY</span><span>·</span><span id="category">VIIMEISET 5 OTTELUA JA KAUDEN PISTEHAIT</span></div>
+  <main class="panels">
+    <section class="team-panel" aria-label="Kotijoukkueen kuntopuntari">
+      <div class="team-panel-head"><div class="team-panel-name" id="panelNameA">KOTI</div><div class="panel-note">KUNTOPUNTARI</div></div>
+      <div class="section-head"><span>Viimeiset 5 ottelua</span><span class="hint">V / T / H</span></div>
+      <div class="match-list" id="matchesA"></div>
+      <div class="section-head"><span>Kauden pistehait</span><span class="hint">M + S = P</span></div>
+      <div class="scorer-table" id="scorersA"></div>
+    </section>
+    <section class="team-panel" aria-label="Vierasjoukkueen kuntopuntari">
+      <div class="team-panel-head"><div class="team-panel-name" id="panelNameB">VIERAS</div><div class="panel-note">KUNTOPUNTARI</div></div>
+      <div class="section-head"><span>Viimeiset 5 ottelua</span><span class="hint">V / T / H</span></div>
+      <div class="match-list" id="matchesB"></div>
+      <div class="section-head"><span>Kauden pistehait</span><span class="hint">M + S = P</span></div>
+      <div class="scorer-table" id="scorersB"></div>
+    </section>
+  </main>
+  <div class="foot"></div>
+</div>
+<div id="error" class="err hidden"></div>
+<script>
+'use strict';
+const q=new URLSearchParams(location.search);
+let matchId=q.get('match_id')||q.get('ottelu')||q.get('match')||'';
+let defaultMatchPromise=null;
+async function ensureMatchId(){if(matchId)return matchId;if(!defaultMatchPromise)defaultMatchPromise=fetch('/api/salibandy-default-match',{cache:'no-store'}).then(r=>r.json()).then(d=>{matchId=String(d.match_id||'953141');return matchId}).catch(()=>{matchId='953141';return matchId});return defaultMatchPromise}
+const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
+const preferredScale=clamp(Number(q.get('scale')||1),.5,2.5);
+const width=clamp(Number(q.get('width')||1200),600,1920);
+const requestedHeight=clamp(Number(q.get('height')||0),0,2160);
+const offsetX=Number.isFinite(Number(q.get('offsetX')))&&q.has('offsetX')?Number(q.get('offsetX')):0;
+const offsetY=Number.isFinite(Number(q.get('offsetY')))&&q.has('offsetY')?Number(q.get('offsetY')):0;
+const refresh=clamp(Number(q.get('refresh')||60),30,300);
+document.documentElement.style.setProperty('--scale',preferredScale);
+document.documentElement.style.setProperty('--gfx-width',width+'px');
+document.documentElement.style.setProperty('--offset-x',offsetX+'px');
+document.documentElement.style.setProperty('--offset-y',offsetY+'px');
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function showError(message){const e=$('error');e.textContent='Kuntopuntari: '+message;e.classList.remove('hidden')}
+function clearError(){$('error').classList.add('hidden')}
+function setLogo(id,url,name){const e=$(id);if(!e)return;if(url&&/^https?:\/\//i.test(url)){const im=document.createElement('img');im.className='logo';im.alt='';im.src=url;im.onerror=()=>{const fb=document.createElement('div');fb.className='logo-fallback';fb.textContent=(name||'?').slice(0,2).toUpperCase();e.replaceWith(fb);fb.id=id};e.replaceChildren(im);e.className=''}else{e.className='logo-fallback';e.textContent=(name||'?').slice(0,2).toUpperCase()}}
+function formatDate(value){const s=String(value||'');const m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?m[3]+'.'+m[2]+'.':s||'—'}
+function renderMatches(id,items,error){const el=$(id);if(!Array.isArray(items)||!items.length){el.innerHTML='<div class="empty">'+esc(error||'Viimeisimpiä pelattuja otteluita ei löytynyt.')+'</div>';return}el.innerHTML=items.slice(0,5).map(item=>{const cls=item.outcome==='V'?'win':item.outcome==='T'?'draw':'loss';return '<div class="match-row"><span class="match-date">'+esc(formatDate(item.date))+'</span><span class="opponent" title="'+esc(item.opponent)+'">'+esc(item.opponent)+'</span><span class="score">'+esc(item.goals_for)+'–'+esc(item.goals_against)+'</span><span class="outcome '+cls+'">'+esc(item.outcome)+'</span></div>'}).join('')}
+function renderScorers(id,items,error){const el=$(id);if(!Array.isArray(items)||!items.length){el.innerHTML='<div class="empty">'+esc(error||'Pelaajakohtaisia kausipisteitä ei saatu.')+'</div>';return}const heading='<div class="scorer-columns"><span>#</span><span>Pelaaja</span><span>M</span><span>S</span><span>P</span></div>';el.innerHTML=heading+items.slice(0,5).map((p,i)=>'<div class="scorer-row"><span class="rank">'+(i+1)+'</span><span class="scorer-name" title="'+esc(p.player_name)+'">'+esc(p.player_name)+'</span><span class="scorer-stat">'+esc(p.goals)+'</span><span class="scorer-stat">'+esc(p.assists)+'</span><span class="scorer-points">'+esc(p.points)+'</span></div>').join('')}
+function render(data){const a=data.teams?.a||{},b=data.teams?.b||{};$('nameA').textContent=a.name||'KOTI';$('nameB').textContent=b.name||'VIERAS';$('panelNameA').textContent=a.name||'KOTI';$('panelNameB').textContent=b.name||'VIERAS';setLogo('logoA',a.logo,a.name);setLogo('logoB',b.logo,b.name);$('competition').textContent=data.competition_name||'SALIBANDY';$('category').textContent=[data.group_name].filter(Boolean).join(' · ')||'VIIMEISET 5 OTTELUA';renderMatches('matchesA',a.recent_matches,a.matches_error);renderMatches('matchesB',b.recent_matches,b.matches_error);renderScorers('scorersA',a.top_scorers,a.scorers_error);renderScorers('scorersB',b.top_scorers,b.scorers_error);clearError();scheduleFit()}
+async function load(){try{await ensureMatchId();const url=new URL('/api/salibandy-form',location.origin);url.searchParams.set('match_id',matchId);url.searchParams.set('timeStamp',Date.now());const r=await fetch(url,{cache:'no-store'});const d=await r.json();if(!r.ok)throw Error(d.error||'Kuntopuntarin tietojen haku epäonnistui.');render(d)}catch(e){showError(e?.message||'Tietojen lataaminen epäonnistui.')}}
+function fitStage(){const stage=$('stage');if(!stage)return;stage.style.setProperty('--fit-scale','1');const naturalWidth=Math.max(stage.scrollWidth,width);const naturalHeight=Math.max(stage.scrollHeight,stage.getBoundingClientRect().height);const availW=Math.max(300,window.innerWidth*.96);const availH=Math.max(200,Math.min(requestedHeight||window.innerHeight*.92,window.innerHeight*.92));const fit=Math.min(preferredScale,availW/naturalWidth,availH/naturalHeight);stage.style.setProperty('--fit-scale',String(clamp(fit,.3,preferredScale)));if(q.get('debug')==='1'){let box=$('debugBox');if(!box){box=document.createElement('div');box.id='debugBox';box.className='debug';document.body.append(box)}box.textContent='Kuntopuntari · '+Math.round(naturalWidth*fit)+'×'+Math.round(naturalHeight*fit)+' px · scale '+fit.toFixed(2)}}
+function scheduleFit(){requestAnimationFrame(()=>requestAnimationFrame(fitStage))}
+async function updateVisibility(){try{const r=await fetch('/api/salibandy-graphics-state',{cache:'no-store'});if(!r.ok)return;const d=await r.json();document.body.classList.toggle('gfx-hidden',d.form!==true)}catch{}}
+function startVisibility(){if(q.get('remote')!=='1'){document.body.classList.remove('gfx-hidden');return}document.body.classList.add('gfx-hidden');updateVisibility();setInterval(updateVisibility,2000)}
+window.addEventListener('resize',scheduleFit);
+if(q.get('preview')==='1'){
+ const demo={competition_name:'Inssi-Divari · ESIMERKKI',group_name:'Kausi 2026–2027',teams:{a:{name:'PIRKAT',logo:'',recent_matches:[['2026-10-10','Josba',5,3],['2026-10-04','Koovee',4,2],['2026-09-28','Tiikerit',2,5],['2026-09-21','O2-Jyväskylä',6,3],['2026-09-14','FBC Turku',3,3]].map(x=>({date:x[0],opponent:x[1],goals_for:x[2],goals_against:x[3],outcome:x[2]>x[3]?'V':x[2]<x[3]?'H':'T'})),top_scorers:[{player_name:'Malli Pelaaja',goals:8,assists:5,points:13},{player_name:'Toinen Esimerkki',goals:6,assists:5,points:11},{player_name:'Kolmas Esimerkki',goals:4,assists:6,points:10},{player_name:'Neljäs Esimerkki',goals:6,assists:2,points:8},{player_name:'Viides Esimerkki',goals:3,assists:4,points:7}]},b:{name:'JOSBA',logo:'',recent_matches:[['2026-10-11','Pirkat',3,5],['2026-10-05','FBC Turku',4,1],['2026-09-29','Tiikerit',4,4],['2026-09-22','Koovee',2,3],['2026-09-15','O2-Jyväskylä',5,2]].map(x=>({date:x[0],opponent:x[1],goals_for:x[2],goals_against:x[3],outcome:x[2]>x[3]?'V':x[2]<x[3]?'H':'T'})),top_scorers:[{player_name:'Pelaaja A',goals:7,assists:7,points:14},{player_name:'Pelaaja B',goals:9,assists:3,points:12},{player_name:'Pelaaja C',goals:5,assists:6,points:11},{player_name:'Pelaaja D',goals:4,assists:5,points:9},{player_name:'Pelaaja E',goals:3,assists:4,points:7}]}}};render(demo)
+}else{load();setInterval(load,refresh*1000)}
+startVisibility();scheduleFit();
+</script>
+</body></html>
