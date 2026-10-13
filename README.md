@@ -16,8 +16,7 @@ Tämä on **täysin erillinen GitHub/Vercel-projekti** salibandyn lähetysgrafii
 - `salibandy-otteluntapahtumat.html` – kaikki maalit, rangaistukset ja aikalisät aikajärjestyksessä
 - `salibandy-tehopelaajat.html` – kompakti grafiikka molempien joukkueiden tehopisteitä tehneistä pelaajista
 - `salibandy-grafiikkaohjaus.html` – grafiikoiden ohjauspaneeli
-- `api/salibandy-match.js` – ottelun yksityiskohtaiset tiedot, maalit ja tapahtumat TorneoPalista
-- `api/salibandy-score.js` – nopea, välimuistiton live-tulos- ja pelikellohaku TorneoPalin `getScore`-rajapinnasta
+- `api/salibandy-match.js` – ottelutiedot Salibandyliiton TorneoPal-rajapinnasta
 - `api/salibandy-graphics-state.js` – etäohjauksen näkyvyystila
 
 ## Uuden GitHub/Vercel-projektin käyttöönotto
@@ -34,11 +33,7 @@ Avaa uuden projektin osoitteessa:
 
 `/api/salibandy-match?match_id=953141`
 
-Nopean live-tuloksen ja kellon voi testata osoitteessa:
-
-`/api/salibandy-score?match_id=953141`
-
-Kun API toimii, vastauksen pitäisi olla JSON-dataa. `getScore`-vastauksen `score`-objektissa ovat tulos- ja kellokentät sekä `last_modified`. Jos reitti palauttaa virheen, tarkista Vercelin Functions Logs.
+Kun API toimii, vastauksen pitäisi olla JSON-dataa. Jos se palauttaa virheen, tarkista Vercelin Functions Logs.
 
 ## Grafiikoiden URL-parametrit
 
@@ -205,11 +200,6 @@ Avaa `salibandy-eratauko.html`. Oletusleveys on 1400 px. Joukkueiden logot ovat 
 
 Kentälliset-grafiikan oikean joukkueen nimi on tasattu oikealle logon viereen.
 
+## getScore-nopeustestin virheiden tulkinta
 
-## Live-tuloksen nopeutustesti
-
-Tulostaulussa tulos ja pelikello haetaan nyt erikseen TorneoPalin `getScore`-rajapinnasta. Oletuspäivitysväli on 2 sekuntia, eikä URL-parametrilla voi asettaa sitä alle 2 sekunnin, jotta pysytään dokumentoidun enintään yhden pyynnön sekunnissa -rajan sisällä. Maalintekijät, syöttäjät, rangaistukset ja muut yksityiskohtaiset tapahtumat haetaan edelleen `getMatch`-rajapinnasta nykyisellä `refresh`-välillä (oletus 3 sekuntia).
-
-Lisää tulostaulun osoitteeseen `&debug=1`, jos siinä on jo kysymysmerkki, tai `?debug=1`, jos URL:ssa ei vielä ole parametreja. Esimerkiksi `salibandy-tulostaulu.html?match_id=953141&debug=1`. Diagnostiikassa näkyvät `getScore`- ja `getMatch`-pyyntöjen vasteajat, lähteen `last_modified`, molempien vastausten tuloskentät ja hyväksytty tulos. Tämä auttaa selvittämään, nopeutuuko tulos/pelikello ja jäävätkö tapahtumat edelleen jälkeen.
-
-Nopeutustestin tavoite on pienentää tulostaulun tulos- ja pelikelloviivettä. Se ei vielä takaa, että maalintekijän nimi tai tapahtumagrafiikka päivittyy yhtä nopeasti, koska ne vaativat yksityiskohtaisen `getMatch`-vastauksen.
+`/api/salibandy-score?match_id=OTTELUN_ID` käyttää TorneoPalin `getScore`-kutsua. Rajapinnan dokumentaatioesimerkin mukaan vastaus voi sisältää `score`-olion ilman erillistä `call.status`-kenttää, joten testipalvelin ei edellytä `call.status`-kenttää. Jos tuloskenttiä ei silti löydy, virhevastauksessa näkyvät `rootKeys` ja rajattu `responsePreview`, joiden avulla vastausrakenne voidaan diagnosoida.
