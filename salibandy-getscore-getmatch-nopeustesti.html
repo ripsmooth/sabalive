@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Salibandy-TV – getScore / getMatch -nopeustesti</title>
+<style>
+:root{color-scheme:dark;--bg:#0c1119;--panel:#151e2b;--panel2:#101722;--line:#2b394c;--text:#eef3f9;--muted:#a5b3c5;--accent:#e6c547;--good:#74d99f;--bad:#ff8989;--blue:#8bc4ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,Segoe UI,Arial,sans-serif}main{max-width:1400px;margin:auto;padding:22px}h1{font-size:clamp(22px,3vw,32px);margin:0 0 6px}h2{font-size:17px;margin:0 0 12px}.sub{color:var(--muted);margin:0 0 20px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:end}.field{display:flex;flex-direction:column;gap:5px}.field label{color:var(--muted);font-size:12px}input,select,button{font:inherit;border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--panel2);color:var(--text)}input{width:180px}select{width:125px}button{cursor:pointer;font-weight:650}button.primary{background:var(--accent);color:#151515;border-color:var(--accent)}button:disabled{opacity:.45;cursor:not-allowed}.hint{font-size:12px;color:var(--muted);margin-top:10px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.statgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.stat{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:10px;min-width:0}.label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}.value{font-size:20px;font-weight:750;overflow-wrap:anywhere}.smallvalue{font-size:14px;font-weight:650;overflow-wrap:anywhere}.status{display:inline-block;border-radius:99px;padding:3px 8px;font-size:12px;background:#293548;color:var(--muted)}.status.good{background:#173a2b;color:var(--good)}.status.bad{background:#452326;color:var(--bad)}.tablewrap{overflow:auto;max-height:460px;border:1px solid var(--line);border-radius:8px}table{border-collapse:collapse;width:100%;font-size:12px;white-space:nowrap}th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line)}th{position:sticky;top:0;background:#202c3b;color:var(--muted);z-index:1}tr:last-child td{border-bottom:0}.muted{color:var(--muted)}.error{color:var(--bad);white-space:pre-wrap;overflow-wrap:anywhere}.source{font-weight:800}.source.score{color:var(--good)}.source.match{color:var(--blue)}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;color:var(--muted);max-height:240px;overflow:auto}.sectionhead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}.btnrow{display:flex;gap:8px;flex-wrap:wrap}.footer{font-size:12px;color:var(--muted);margin-top:14px}
+@media(max-width:800px){main{padding:12px}.grid{grid-template-columns:1fr}.statgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.panel{padding:12px}}
+</style>
+</head>
+<body><main>
+<h1>getScore vs. getMatch – nopeustesti</h1>
+<p class="sub">Erillinen diagnostiikkasivu. Ei muuta eikä kirjoita muihin Salibandy-TV-grafiikoihin.</p>
+<div class="panel">
+  <div class="controls">
+    <div class="field"><label for="matchId">Ottelun ID</label><input id="matchId" inputmode="numeric" value="939031" autocomplete="off"></div>
+    <div class="field"><label for="interval">Kyselyväli</label><select id="interval"><option value="2" selected>2 sekuntia</option><option value="3">3 sekuntia</option><option value="5">5 sekuntia</option><option value="10">10 sekuntia</option></select></div>
+    <button id="start" class="primary">Aloita testi</button><button id="stop" disabled>Pysäytä</button>
+    <div class="btnrow"><button id="csv">Vie loki CSV:nä</button><button id="json">Vie loki JSON:na</button><button id="clear">Tyhjennä loki</button></div>
+  </div>
+  <p class="hint">Molemmat API-pyynnöt käynnistetään rinnakkain samalla kierroksella. Oletusväli on 2 s, jotta getScorea ei kysellä dokumentaation 1 pyyntö/s -rajaa tiheämmin. Testaa mieluiten käynnissä olevalla ottelulla.</p>
+  <div id="runStatus" class="status">Ei käynnissä</div> <span id="counts" class="muted">Kyselyitä: 0</span>
+</div>
+<div class="grid">
+  <section class="panel"><div class="sectionhead"><h2><span class="source score">getScore</span> – tulosrajapinta</h2><span id="scoreStatus" class="status">Ei vielä testattu</span></div>
+    <div class="statgrid">
+      <div class="stat"><div class="label">Tulos (live)</div><div id="scoreResult" class="value">—</div></div>
+      <div class="stat"><div class="label">Pelikello</div><div id="scoreClock" class="value">—</div></div>
+      <div class="stat"><div class="label">Ottelun tila / erä</div><div id="scorePeriod" class="smallvalue">—</div></div>
+      <div class="stat"><div class="label">Selainpyynnön kesto</div><div id="scoreMs" class="value">—</div></div>
+      <div class="stat"><div class="label">Palvelinpyynnön kesto</div><div id="scoreServerMs" class="smallvalue">—</div></div>
+      <div class="stat"><div class="label">Lähteen last_modified</div><div id="scoreModified" class="smallvalue">—</div></div>
+    </div><p id="scoreError" class="error"></p>
+  </section>
+  <section class="panel"><div class="sectionhead"><h2><span class="source match">getMatch</span> – ottelutietorajapinta</h2><span id="matchStatus" class="status">Ei vielä testattu</span></div>
+    <div class="statgrid">
+      <div class="stat"><div class="label">Tulos (live)</div><div id="matchResult" class="value">—</div></div>
+      <div class="stat"><div class="label">Pelikello</div><div id="matchClock" class="value">—</div></div>
+      <div class="stat"><div class="label">Ottelun tila / erä</div><div id="matchPeriod" class="smallvalue">—</div></div>
+      <div class="stat"><div class="label">Selainpyynnön kesto</div><div id="matchMs" class="value">—</div></div>
+      <div class="stat"><div class="label">Palvelinpyynnön kesto</div><div id="matchServerMs" class="smallvalue">Ei ilmoiteta</div></div>
+      <div class="stat"><div class="label">Lähteen last_modified</div><div id="matchModified" class="smallvalue">—</div></div>
+    </div><p id="matchError" class="error"></p>
+  </section>
+</div>
+<section class="panel"><div class="sectionhead"><h2>Havaitut muutokset</h2><span id="changeCount" class="status">0 muutosta</span></div><p class="hint">Kirjaa ensimmäisen havainnon ja jokaisen myöhemmän tuloksen, pelikellon, tilan tai last_modified-kentän muutoksen. Havaintoaika on tämän selaimen aika; se ei ole TorneoPalin sisäinen maalintekoaika.</p><div class="tablewrap"><table><thead><tr><th>#</th><th>Havaittu aika</th><th>Lähde</th><th>Muutokset</th><th>Tulos</th><th>Kello</th><th>HTTP</th><th>Vasteaika</th><th>last_modified</th></tr></thead><tbody id="changes"><tr><td colspan="9" class="muted">Ei havaintoja vielä.</td></tr></tbody></table></div></section>
+<section class="panel"><div class="sectionhead"><h2>Kyselyhistoria</h2><span id="historyCount" class="status">0 riviä</span></div><div class="tablewrap"><table><thead><tr><th>#</th><th>Kierroksen aloitus</th><th>Lähde</th><th>Vastaanotettu</th><th>HTTP</th><th>Vasteaika</th><th>Tulos</th><th>Kello</th><th>last_modified</th><th>Virhe</th></tr></thead><tbody id="history"><tr><td colspan="10" class="muted">Ei kyselyitä vielä.</td></tr></tbody></table></div></section>
+<section class="panel"><h2>Viimeisimpien vastausten kentät</h2><div class="grid"><div><div class="label">getScore</div><pre id="scoreRaw">Ei vastausta.</pre></div><div><div class="label">getMatch</div><pre id="matchRaw">Ei vastausta.</pre></div></div></section>
+<p class="footer">Vinkki: jos haluat mitata, kumpi näkee uuden maalin ensin, pidä testisivu käynnissä ottelun aikana. Havaintoaika kertoo, kumman rajapinnan vastauksessa muutos tuli selaimelle ensimmäisenä; se ei yksin paljasta, milloin TorneoPal sai tiedon alun perin.</p>
+</main>
+<script>
+(()=>{
+'use strict';
+const $=id=>document.getElementById(id);
+let running=false,timer=null,inFlight=false,cycle=0,changes=[],history=[],last={score:null,match:null},startedAt=null;
+const fmt=v=>(v===null||v===undefined||v==='')?'—':String(v);
+const localTime=ts=>new Date(ts).toLocaleTimeString('fi-FI',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit',fractionalSecondDigits:3});
+const iso=ts=>new Date(ts).toISOString();
+const scoreOf=(source,data)=>source==='score'?(data?.score||null):(data?.match||null);
+function clockOf(obj){return obj?.live_time_mmss||obj?.live_time||obj?.match_time||obj?.clock||''}
+function scoreText(obj){if(!obj)return '—';const a=obj.live_A??obj.fs_A??obj.score_A;const b=obj.live_B??obj.fs_B??obj.score_B;return a==null&&b==null?'—':`${fmt(a)} – ${fmt(b)}`}
+function modifiedOf(obj){return obj?.last_modified??obj?.modified??''}
+function statusOf(obj){return [obj?.status,obj?.live_period!==undefined&&obj?.live_period!==''?`erä ${obj.live_period}`:''].filter(Boolean).join(' / ')||'—'}
+function setStatus(id,text,kind){const el=$(id);el.textContent=text;el.className='status'+(kind?' '+kind:'')}
+function addChange(row){changes.unshift(row);if(changes.length>2000)changes.length=2000;renderChanges()}
+function renderChanges(){const body=$('changes');$('changeCount').textContent=`${changes.length} muutosta`;if(!changes.length){body.innerHTML='<tr><td colspan="9" class="muted">Ei havaintoja vielä.</td></tr>';return}body.innerHTML=changes.map((x,i)=>`<tr><td>${changes.length-i}</td><td>${x.time}</td><td>${x.source==='score'?'getScore':'getMatch'}</td><td>${esc(x.fields)}</td><td>${esc(x.result)}</td><td>${esc(x.clock)}</td><td>${esc(x.http)}</td><td>${esc(x.ms)} ms</td><td>${esc(x.modified||'—')}</td></tr>`).join('')}
+function renderHistory(){const body=$('history');$('historyCount').textContent=`${history.length} riviä`;if(!history.length){body.innerHTML='<tr><td colspan="10" class="muted">Ei kyselyitä vielä.</td></tr>';return}body.innerHTML=history.slice(0,1000).map((x,i)=>`<tr><td>${history.length-i}</td><td>${x.cycleStart}</td><td>${x.source==='score'?'getScore':'getMatch'}</td><td>${x.received}</td><td>${esc(x.http)}</td><td>${esc(x.ms)} ms</td><td>${esc(x.result)}</td><td>${esc(x.clock)}</td><td>${esc(x.modified||'—')}</td><td class="error">${esc(x.error||'')}</td></tr>`).join('')}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function updateCard(source,row,obj){const prefix=source==='score'?'score':'match';$(prefix+'Result').textContent=row.result;$(prefix+'Clock').textContent=row.clock||'—';$(prefix+'Period').textContent=statusOf(obj);$(prefix+'Ms').textContent=row.ms+' ms';$(prefix+'Modified').textContent=row.modified||'—';$(prefix+'Error').textContent=row.error||'';$(prefix+'Raw').textContent=JSON.stringify(row.raw,null,2);$(prefix+'ServerMs').textContent=source==='score'&&row.serverMs!=null?row.serverMs+' ms':'Ei ilmoiteta';setStatus(prefix+'Status',row.error?'Virhe':`HTTP ${row.http}`,row.error?'bad':'good')}
+async function request(source,matchId,cycleStart){const endpoint=source==='score'?'/api/salibandy-score':'/api/salibandy-match';const url=new URL(endpoint,location.origin);url.searchParams.set('match_id',matchId);url.searchParams.set('_test',String(Date.now())+'-'+Math.random().toString(36).slice(2));if(source==='match')url.searchParams.set('timeStamp',String(Date.now()));const start=performance.now();let http='—',data=null,error='',serverMs=null;try{const response=await fetch(url,{cache:'no-store',headers:{'Accept':'application/json'}});http=response.status;data=await response.json();if(!response.ok)throw new Error(data?.error||`HTTP ${response.status}`);if(source==='score'&&!data?.score)throw new Error('Vastauksesta puuttuu score-olio');if(source==='match'&&!data?.match)throw new Error('Vastauksesta puuttuu match-olio');if(source==='match'&&data?.call?.status&&data.call.status!=='ok')throw new Error(`TorneoPal: ${data.call.status}`);if(source==='score'&&data?.call?.status&&data.call.status!=='ok')throw new Error(`TorneoPal: ${data.call.status}`);serverMs=data?._sabalive?.elapsedMs??null}catch(e){error=e?.message||String(e)}const receivedTs=Date.now();const obj=scoreOf(source,data);const row={source,cycle,cycleStart:localTime(cycleStart),requested:iso(cycleStart),received:localTime(receivedTs),receivedIso:iso(receivedTs),http,ms:Math.round(performance.now()-start),serverMs,result:scoreText(obj),clock:clockOf(obj)||'—',modified:modifiedOf(obj),error,raw:data};history.unshift(row);if(history.length>2000)history.length=2000;updateCard(source,row,obj);if(!error&&obj){const snapshot={result:scoreText(obj),clock:clockOf(obj)||'—',status:statusOf(obj),modified:modifiedOf(obj)};const previous=last[source];const fields=[];if(!previous){fields.push('ensimmäinen havainto')}else for(const key of ['result','clock','status','modified'])if(snapshot[key]!==previous[key])fields.push(({result:'tulos',clock:'pelikello',status:'tila/erä',modified:'last_modified'})[key]+`: ${previous[key]||'—'} → ${snapshot[key]||'—'}`);if(fields.length){addChange({time:localTime(receivedTs),timestamp:receivedTs,source,fields:fields.join('; '),result:snapshot.result,clock:snapshot.clock,http,ms:row.ms,modified:snapshot.modified,cycle});}last[source]=snapshot}renderHistory();return row}
+async function poll(){if(!running||inFlight)return;inFlight=true;cycle++;const thisCycle=cycle;const cycleStart=Date.now();$('counts').textContent=`Kyselyitä/kierroksia: ${thisCycle}`;try{await Promise.all([request('score',$('matchId').value.trim(),cycleStart),request('match',$('matchId').value.trim(),cycleStart)])}finally{inFlight=false;if(running){const ms=Number($('interval').value)*1000;timer=setTimeout(poll,ms)}}}
+function start(){const id=$('matchId').value.trim();if(!/^\d{1,12}$/.test(id)){alert('Anna numeerinen ottelun ID.');return}if(running)return;running=true;startedAt=Date.now();$('matchId').disabled=true;$('interval').disabled=true;$('start').disabled=true;$('stop').disabled=false;setStatus('runStatus',`Testi käynnissä · ottelu ${id}`,'good');poll()}
+function stop(){running=false;if(timer)clearTimeout(timer);timer=null;$('matchId').disabled=false;$('interval').disabled=false;$('start').disabled=false;$('stop').disabled=true;setStatus('runStatus','Pysäytetty','')}
+function download(name,type,content){const blob=new Blob([content],{type});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+function csv(){const rows=[['id','cycle','source','cycleStart','requested','received','http','roundTripMs','serverMs','result','clock','modified','error']];history.slice().reverse().forEach(x=>rows.push([x.cycle,x.cycle,x.source,x.cycleStart,x.requested,x.receivedIso,x.http,x.ms,x.serverMs??'',x.result,x.clock,x.modified,x.error]));const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';download('salibandy-getscore-getmatch-historia.csv','text/csv;charset=utf-8','\ufeff'+rows.map(r=>r.map(q).join(';')).join('\r\n'))}
+$('start').addEventListener('click',start);$('stop').addEventListener('click',stop);$('csv').addEventListener('click',csv);$('json').addEventListener('click',()=>download('salibandy-getscore-getmatch-testi.json','application/json;charset=utf-8',JSON.stringify({matchId:$('matchId').value,startedAt:startedAt?iso(startedAt):null,exportedAt:iso(Date.now()),changes:changes.slice().reverse(),history:history.slice().reverse()},null,2)));$('clear').addEventListener('click',()=>{if(!confirm('Tyhjennetäänkö muutos- ja kyselylokit?'))return;changes=[];history=[];last={score:null,match:null};renderChanges();renderHistory()});window.addEventListener('beforeunload',()=>{running=false;if(timer)clearTimeout(timer)});
+})();
+</script></body></html>
