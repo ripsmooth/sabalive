@@ -94,8 +94,48 @@ async function getMatch(){await ensureMatchId();const u=new URL('/api/salibandy-
 function setText(id,value){const e=$(id);if(e)e.textContent=value??''}
 function setLogo(id,url,name){const e=$(id);if(!e)return;e.innerHTML='';if(url&&/^https?:\/\//i.test(url)){const im=document.createElement('img');im.className='logo';im.src=url;im.alt='';im.onerror=()=>fallback();e.className='';e.appendChild(im);function fallback(){e.className='fallback';e.textContent=(name||'?').slice(0,2).toUpperCase()}}else{e.className='fallback';e.textContent=(name||'?').slice(0,2).toUpperCase()}}
 function teamFields(m){return {a:{id:String(m.team_A_id||''),name:m.team_A_name||m.club_A_name||'KOTI',logo:m.club_A_crest||m.team_A_crest||''},b:{id:String(m.team_B_id||''),name:m.team_B_name||m.club_B_name||'VIERAS',logo:m.club_B_crest||m.team_B_crest||''}}}
-function getScore(m){return {a:m.live_A??m.fs_A??'0',b:m.live_B??m.fs_B??'0'}}
+function parseScoreValue(value){
+ if(value===null||value===undefined||String(value).trim()==='')return null;
+ const n=Number(value);
+ return Number.isInteger(n)&&n>=0?n:null;
+}
+function getRawScore(m){
+ const liveA=parseScoreValue(m.live_A),liveB=parseScoreValue(m.live_B);
+ const finalA=parseScoreValue(m.fs_A),finalB=parseScoreValue(m.fs_B);
+ return {a:liveA??finalA,b:liveB??finalB,liveA:m.live_A??null,liveB:m.live_B??null,fsA:m.fs_A??null,fsB:m.fs_B??null};
+}
+let acceptedScore=null;let pendingLowerScore='';let pendingLowerSince=0;let pendingLowerCount=0;let currentMatchKey='';
+const LOWER_SCORE_CONFIRM_MS=12000;const LOWER_SCORE_CONFIRM_READS=5;
 let clockBaseSeconds=null;let clockReceivedAt=0;let clockIsRunning=false;let clockFinished=false;let clockPeriodKey='';let updateInFlight=false;
+function clearPendingLowerScore(){pendingLowerScore='';pendingLowerSince=0;pendingLowerCount=0;}
+function updateScore(m){
+ const raw=getRawScore(m);const now=Date.now();
+ const candidate=raw.a===null||raw.b===null?null:{a:raw.a,b:raw.b};
+ if(!acceptedScore&&candidate){acceptedScore={...candidate};clearPendingLowerScore();}
+ else if(candidate&&acceptedScore){
+  const same=candidate.a===acceptedScore.a&&candidate.b===acceptedScore.b;
+  const nonDecreasing=candidate.a>=acceptedScore.a&&candidate.b>=acceptedScore.b;
+  if(same){clearPendingLowerScore();}
+  else if(nonDecreasing){acceptedScore={...candidate};clearPendingLowerScore();}
+  else {
+   // TorneoPal may briefly return an older score snapshot. Only accept a lower score
+   // after the exact same rollback has persisted across several polls and 12 seconds.
+   const key=candidate.a+'-'+candidate.b;
+   if(key!==pendingLowerScore){pendingLowerScore=key;pendingLowerSince=now;pendingLowerCount=1;}
+   else pendingLowerCount++;
+   if(pendingLowerCount>=LOWER_SCORE_CONFIRM_READS&&now-pendingLowerSince>=LOWER_SCORE_CONFIRM_MS){acceptedScore={...candidate};clearPendingLowerScore();}
+  }
+ }
+ const shown=acceptedScore||candidate||{a:0,b:0};
+ const debugState={rawLiveA:raw.liveA,rawLiveB:raw.liveB,rawFsA:raw.fsA,rawFsB:raw.fsB,candidate,shown:{...shown},pendingLowerScore,pendingLowerCount,pendingLowerSeconds:pendingLowerSince?Math.max(0,Math.round((now-pendingLowerSince)/1000)):0};
+ window.__salibandyScoreDebug=()=>{
+  const fmt=v=>v===null||v===undefined||v===''?'—':String(v);
+  return 'Ottelu: '+(currentMatchKey||matchId||'—')+'\nTorneoPal live: '+fmt(debugState.rawLiveA)+' – '+fmt(debugState.rawLiveB)+'\nTorneoPal fs: '+fmt(debugState.rawFsA)+' – '+fmt(debugState.rawFsB)+'\nNäytetty: '+debugState.shown.a+' – '+debugState.shown.b+'\nVanhan tuloksen tarkistus: '+(debugState.pendingLowerScore?debugState.pendingLowerScore+' ('+debugState.pendingLowerCount+'/'+LOWER_SCORE_CONFIRM_READS+', '+debugState.pendingLowerSeconds+' s)':'ei aktiivinen');
+ };
+ if(q.get('debug')==='1')console.debug('[Salibandy tulostaulu]',{time:new Date(now).toISOString(),matchId:currentMatchKey,rawLiveA:raw.liveA,rawLiveB:raw.liveB,rawFsA:raw.fsA,rawFsB:raw.fsB,shown:{...shown},pendingLowerScore,pendingLowerCount});
+ setText('score',String(shown.a)+' – '+String(shown.b));
+ return shown;
+}
 function parseClockSeconds(value){if(value===null||value===undefined||value==='')return null;const s=String(value).trim();const m=s.match(/^(\d{1,3}):(\d{2})(?::(\d{2}))?$/);if(m){if(m[3]!==undefined)return Number(m[1])*3600+Number(m[2])*60+Number(m[3]);return Number(m[1])*60+Number(m[2])}if(/^\d+(?:\.\d+)?$/.test(s))return Math.floor(Number(s));return null}
 function parseTimerStartEpoch(value){if(value===null||value===undefined||value==='')return null;const s=String(value).trim();if(/^\d{10,13}$/.test(s)){const n=Number(s);return n>1e12?n:n*1000}const n=Date.parse(s);return Number.isFinite(n)?n:null}
 function formatClockSeconds(total){total=Math.max(0,Math.floor(total));const mm=Math.floor(total/60),ss=total%60;return String(mm).padStart(2,'0')+':'+String(ss).padStart(2,'0')}
@@ -135,8 +175,16 @@ function startVisibility(key,defaultVisible){const remote=new URLSearchParams(lo
 function showError(err){const e=$('error');if(e){e.textContent='Salibandy: '+(err?.message||err);e.classList.remove('hidden')}}
 function clearError(){const e=$('error');if(e)e.classList.add('hidden')}
 
-const activeEvents=[];let knownEventIds=null;
-function eventKey(e,type){return String(e.event_id||[type,e.time,e.player_id,e.player_name,e.description].join('_'))}
+const activeEvents=[];const seenEventKeys=new Set();let eventsInitialized=false;
+function eventKey(e,type){
+ const id=String(e.event_id??'').trim();if(id)return type+':'+id;
+ const norm=v=>String(v??'').trim().toLowerCase().replace(/\s+/g,' ');
+ const time=e.time??e.live_time_mmss??e.time_mmss??e.time_min??'';
+ const player=e.player_id??e.player_name??e.name??'';
+ const team=e.team_id??e.team_name??'';
+ if(type==='goal')return [type,norm(time),norm(player),norm(team),norm(e.score_A),norm(e.score_B)].join('|');
+ return [type,norm(time),norm(player),norm(team),norm(e.code),norm(e.description_text??e.description)].join('|');
+}
 function collectMatchEvents(m){
  const out=[];
  // TorneoPalin goals-lista sisältää usein vain maalintekijän ja tuloksen.
@@ -159,7 +207,8 @@ function collectMatchEvents(m){
   out.push({...merged,_kind:'goal',_key:eventKey(merged,'goal')});
  }
  for(const b of (Array.isArray(m.bookings)?m.bookings:[])) out.push({...b,_kind:'penalty',_key:eventKey(b,'penalty')});
- return out;
+ // Deduplicate copies within a single API response, too.
+ return [...new Map(out.map(e=>[e._key,e])).values()];
 }
 function eventMarkup(e,m){
  const penalty=e._kind==='penalty';
@@ -172,21 +221,31 @@ function eventMarkup(e,m){
  const teamId=String(e.team_id||'');const home=teamId&&teamId===String(m.team_A_id||'');const team=teamId&&teamId===String(m.team_B_id||'')?m.team_B_name:(home?m.team_A_name:'');
  return `<div class="event-row ${penalty?'penalty':'goal'}"><div class="event-time"><span>${esc(time)}</span><span>${penalty?esc((String(e.code||'2min').match(/\d+/)?.[0]||'2')+' min'):esc((e.score_A??m.live_A??0)+'–'+(e.score_B??m.live_B??0))}</span></div><div class="event-main"><div class="event-player">${esc(number?'#'+number+' ':'')}${esc(name)}</div><div class="event-detail">${esc(detail||team|| (penalty?'Rangaistus':'Maali'))}</div></div><div class="event-mark">${penalty?'JÄÄHY':'MAALI'}</div></div>`;
 }
+function resetForNewMatch(key){
+ currentMatchKey=key;acceptedScore=null;clearPendingLowerScore();activeEvents.length=0;seenEventKeys.clear();eventsInitialized=false;clockBaseSeconds=null;clockReceivedAt=0;clockIsRunning=false;clockFinished=false;clockPeriodKey='';
+}
+function ensureMatchState(m){
+ const key=String(matchId||m.match_id||m.id||'unknown');
+ if(currentMatchKey&&key!==currentMatchKey)resetForNewMatch(key);
+ else if(!currentMatchKey)currentMatchKey=key;
+}
 function renderEvents(m){
- const current=collectMatchEvents(m);const ids=new Set(current.map(e=>e._key));
- if(knownEventIds===null){knownEventIds=ids;}
- else {
-   const fresh=current.filter(e=>!knownEventIds.has(e._key));
-   fresh.sort((a,b)=>String(b.wall_time||'').localeCompare(String(a.wall_time||'')));
-   for(const e of fresh){activeEvents.unshift({event:e,match:m,createdAt:Date.now()});}
-   knownEventIds=ids;
+ const current=collectMatchEvents(m);
+ if(!eventsInitialized){
+  // Events already present on first page load are historical, not new live notifications.
+  for(const e of current)seenEventKeys.add(e._key);
+  eventsInitialized=true;
+ }else{
+  const fresh=current.filter(e=>!seenEventKeys.has(e._key));
+  fresh.sort((a,b)=>String(b.wall_time||'').localeCompare(String(a.wall_time||'')));
+  for(const e of fresh){seenEventKeys.add(e._key);activeEvents.unshift({event:e,match:m,createdAt:Date.now()});}
  }
  const now=Date.now();
  for(let i=activeEvents.length-1;i>=0;i--) if(now-activeEvents[i].createdAt>=20000)activeEvents.splice(i,1);
  activeEvents.splice(3);
  const el=$('events');if(el)el.innerHTML=activeEvents.map(x=>eventMarkup(x.event,x.match)).join('');
 }
-async function update(){if(updateInFlight)return;updateInFlight=true;try{const m=await getMatch();const t=teamFields(m),sc=getScore(m);setText('teamA',t.a.name);setText('teamB',t.b.name);setLogo('logoA',t.a.logo,t.a.name);setLogo('logoB',t.b.logo,t.b.name);setText('score',String(sc.a)+' – '+String(sc.b));setText('clock',clockMode==='period'?(periodLabel(m)||'—'):(matchClock(m)||''));renderEvents(m);clearError()}catch(e){showError(e)}finally{updateInFlight=false}}
+async function update(){if(updateInFlight)return;updateInFlight=true;try{const m=await getMatch();ensureMatchState(m);const t=teamFields(m),sc=updateScore(m);setText('teamA',t.a.name);setText('teamB',t.b.name);setLogo('logoA',t.a.logo,t.a.name);setLogo('logoB',t.b.logo,t.b.name);setText('clock',clockMode==='period'?(periodLabel(m)||'—'):(matchClock(m)||''));renderEvents({...m,live_A:sc.a,live_B:sc.b});clearError()}catch(e){showError(e)}finally{updateInFlight=false}}
 startVisibility('scorebug',true);
 if(q.get('preview')==='1'){
  setText('teamA','PIRKAT');setText('teamB','JOSBA');setText('score','3 – 2');setText('clock',clockMode==='period'?(normalizePeriod(requestedPeriod)||'3. ERÄ'):'20:00');
@@ -234,7 +293,7 @@ if(q.get('preview')==='1'){
     root.style.setProperty('--scale-y', String(overallScale * verticalFit));
     if (debugBox) {
       const r = sizeStage.getBoundingClientRect();
-      debugBox.textContent = 'KOKOSÄÄDÖT\nwidth=' + targetWidth + ' px\nheight=' + (requestedHeight === null ? 'auto (' + Math.round(naturalHeight) + ' px)' : requestedHeight + ' px') + '\nscale=' + overallScale + '\nNäkyvä laatikko: ' + Math.round(r.width) + ' × ' + Math.round(r.height) + ' px';
+      debugBox.textContent = 'KOKOSÄÄDÖT\nwidth=' + targetWidth + ' px\nheight=' + (requestedHeight === null ? 'auto (' + Math.round(naturalHeight) + ' px)' : requestedHeight + ' px') + '\nscale=' + overallScale + '\nNäkyvä laatikko: ' + Math.round(r.width) + ' × ' + Math.round(r.height) + ' px' + (window.__salibandyScoreDebug ? '\n\n' + window.__salibandyScoreDebug() : '');
     }
   }
   /* Sisältökorkeus voi muuttua, kun pelaajat/tapahtumat päivittyvät. */
@@ -244,6 +303,7 @@ if(q.get('preview')==='1'){
   }
   window.addEventListener('resize', updateSize);
   requestAnimationFrame(updateSize);
+  if (debugBox) window.setInterval(updateSize, 1000);
 })();
 </script>
 </body></html>

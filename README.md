@@ -149,7 +149,7 @@ Kaikki seitsemän grafiikkasivua tukevat parametreja `width` ja `height` piksele
 
 Esimerkki: `salibandy-tulostaulu.html?width=650&height=90&offsetX=50&offsetY=40`
 
-Esikatseluun voi lisätä `debug=1`, jolloin sivun oikeaan alakulmaan tulee näkyvien mittojen diagnostiikka.
+Esikatseluun voi lisätä `debug=1`, jolloin sivun oikeaan alakulmaan tulee näkyvien mittojen diagnostiikka. Tulostaulussa sama diagnostiikka näyttää lisäksi TorneoPalin `live_A/live_B`- ja `fs_A/fs_B`-arvot, ruudulla näytettävän tuloksen sekä mahdollisen vanhan tuloksen vahvistuksen. Selaimen konsoliin kirjataan samat tulostiedot päivityksittäin. Tulostaulun suojaus hyväksyy maalimäärän pienentymisen vasta, kun sama alempi tulos on nähty vähintään viidessä kyselyssä ja vähintään 12 sekunnin ajan; suurempi tulos hyväksytään heti.
 
 Oletusleveydet: tulostaulu 575 px; tehopelaajat 575 px; tilastot 1400 px; Lower Third 1400 px; ottelun tapahtumat 1200 px; kokoonpanot 840 px; sarjataulukko 1100 px. Korkeus on oletuksena automaattinen ja riippuu näkymän sisällöstä.
 
