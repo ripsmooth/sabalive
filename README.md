@@ -7,6 +7,7 @@ Tämä on **täysin erillinen GitHub/Vercel-projekti** salibandyn lähetysgrafii
 - `index.html` – aloitussivu ja linkit grafiikoihin
 - `salibandy-tulostaulu.html` – tulostaulu
 - `salibandy-lowerthird.html` – maalintekijägrafiikka
+- `salibandy-selostaja.html` – selostajan nimigrafiikka (oletus: Jussi Valli)
 - `salibandy-tilastot.html` – tilastot
 - `salibandy-sarjataulukko.html` – ottelun sarjan sarjataulukko
 - `api/salibandy-standings.js` – ottelun sarjan ja lohkon sarjataulukon haku TorneoPalista
@@ -185,3 +186,8 @@ Oletusleveydet: tulostaulu 575 px; tehopelaajat 575 px; tilastot 1400 px; Lower 
 `salibandy-kentalliset.html` näyttää ottelun kentälliset joukkueittain. Pelaajat ryhmitellään TorneoPalin `position`-kentän rivinumeron mukaan (esim. `VL/1`, `KH/1`), maalivahdit erotellaan omaksi ryhmäkseen, ja mukana ovat myös kokoonpanon toimihenkilöt sekä peliasutiedot, jos rajapinta palauttaa ne. Osoitteeseen voi lisätä `?match_id=939044`, `?width=1200`, `?height=1000`, `?scale=1`, `?offsetX=0&offsetY=0` tai `?preview=1` testidataa varten. Näkyvyyden etäohjaus käyttää omaa `lines`-avainta.
 
 - `salibandy-kuntopuntari.html`: Kuntopuntari-grafiikka näyttää molempien joukkueiden viisi viimeisintä pelattua ottelua sekä viisi kauden tehokkainta pistemiestä. Otteluhistoria ja pelaajatilastot haetaan TorneoPalin REST-rajapinnasta palvelinreitin `/api/salibandy-form` kautta. Grafiikan oletusleveys on 1200 px; `match_id`, `width`, `height`, `scale`, `offsetX`, `offsetY` ja `refresh` ovat säädettävissä URL-parametreilla. `?preview=1` näyttää esimerkkidatan ja `?remote=1` kytkee sivun ohjauspaneelin näkyvyystilaan.
+
+
+## Selostaja-grafiikka
+
+Avaa `salibandy-selostaja.html`. Nimi vaihdetaan URL-parametrilla `name`, esimerkiksi `salibandy-selostaja.html?name=Maija%20Meik%C3%A4l%C3%A4inen`. Oletusnimi on Jussi Valli. Oletussijainti on 40 px ylhäältä ja 30 px oikealta. Valinnaiset parametrit: `width` (leveys pikseleinä), `scale` (skaalaus), `offsetY` (yläreuna pikseleinä) ja `offsetX` (oikea reuna pikseleinä).

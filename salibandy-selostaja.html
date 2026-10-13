@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Salibandy · Selostaja</title>
+<style>
+:root{--ink:#101820;--panel:#1b2a35;--accent:#e8c547;--white:#fff;--muted:#bdc7d0;--scale:1;--gfx-width:520px;--offset-x:30px;--offset-y:40px}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;background:transparent;overflow:hidden}
+body{font-family:Arial,Helvetica,sans-serif;color:var(--white);font-variant-numeric:tabular-nums}
+.stage{position:fixed;top:var(--offset-y);right:var(--offset-x);width:var(--gfx-width);max-width:calc(100vw - 16px);transform:scale(var(--scale));transform-origin:top right;filter:drop-shadow(0 4px 8px rgba(0,0,0,.3))}
+.gfx{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:stretch;min-height:74px;background:rgba(16,24,32,.97);border-bottom:3px solid var(--accent);overflow:hidden}
+.label{display:flex;align-items:center;padding:16px 20px;background:var(--accent);color:var(--ink);font-size:20px;font-weight:900;white-space:nowrap}
+.name{display:flex;align-items:center;min-width:0;padding:16px 22px;font-size:27px;font-weight:900;line-height:1.05;overflow-wrap:anywhere}
+@media(max-width:400px){.label{padding:12px;font-size:16px}.name{padding:12px;font-size:21px}.gfx{min-height:58px}}
+</style></head>
+<body><main class="stage"><div class="gfx"><div class="label">Selostaja:</div><div class="name" id="announcer">Jussi Valli</div></div></main>
+<script>
+(()=>{
+ const p=new URLSearchParams(location.search);
+ const name=(p.get('name')||'Jussi Valli').trim()||'Jussi Valli';
+ document.getElementById('announcer').textContent=name;
+ const width=Number(p.get('width')); if(Number.isFinite(width)&&width>=240&&width<=1600)document.documentElement.style.setProperty('--gfx-width',width+'px');
+ const scale=Number(p.get('scale')); if(Number.isFinite(scale)&&scale>=0.25&&scale<=3)document.documentElement.style.setProperty('--scale',String(scale));
+ const top=Number(p.get('offsetY')); if(p.has('offsetY')&&Number.isFinite(top)&&top>=0&&top<=2160)document.documentElement.style.setProperty('--offset-y',top+'px');
+ const right=Number(p.get('offsetX')); if(p.has('offsetX')&&Number.isFinite(right)&&right>=0&&right<=2160)document.documentElement.style.setProperty('--offset-x',right+'px');
+})();
+</script></body></html>
