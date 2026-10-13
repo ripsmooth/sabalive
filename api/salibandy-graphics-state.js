@@ -16,7 +16,7 @@ export default async function handler(req, res) {
     return data.result;
   }
   const key="salibandy:graphics:visibility";
-  const defaults={scorebug:true,lowerthird:false,stats:false,lineups:false,lines:false,events:false,scorers:false,updatedAt:null};
+  const defaults={scorebug:true,lowerthird:false,stats:false,lineups:false,lines:false,events:false,scorers:false,form:false,updatedAt:null};
   try {
     if(req.method==="GET"){
       const raw=await redis(["GET",key]);let state={...defaults};
@@ -29,7 +29,7 @@ export default async function handler(req, res) {
     if(typeof supplied!=="string"||supplied!==password)return res.status(401).json({error:"Väärä ohjaussalasana."});
     const raw=await redis(["GET",key]);let current={...defaults};
     if(raw){try{current={...current,...JSON.parse(raw)}}catch{}}
-    const next={scorebug:typeof body.scorebug==="boolean"?body.scorebug:!!current.scorebug,lowerthird:typeof body.lowerthird==="boolean"?body.lowerthird:!!current.lowerthird,stats:typeof body.stats==="boolean"?body.stats:!!current.stats,lineups:typeof body.lineups==="boolean"?body.lineups:!!current.lineups,lines:typeof body.lines==="boolean"?body.lines:!!current.lines,events:typeof body.events==="boolean"?body.events:!!current.events,scorers:typeof body.scorers==="boolean"?body.scorers:!!current.scorers,updatedAt:new Date().toISOString()};
+    const next={scorebug:typeof body.scorebug==="boolean"?body.scorebug:!!current.scorebug,lowerthird:typeof body.lowerthird==="boolean"?body.lowerthird:!!current.lowerthird,stats:typeof body.stats==="boolean"?body.stats:!!current.stats,lineups:typeof body.lineups==="boolean"?body.lineups:!!current.lineups,lines:typeof body.lines==="boolean"?body.lines:!!current.lines,events:typeof body.events==="boolean"?body.events:!!current.events,scorers:typeof body.scorers==="boolean"?body.scorers:!!current.scorers,form:typeof body.form==="boolean"?body.form:!!current.form,updatedAt:new Date().toISOString()};
     await redis(["SET",key,JSON.stringify(next)]);
     return res.status(200).json(next);
   } catch { return res.status(502).json({error:"Yhteys salibandyn ohjaustilan tallennukseen epäonnistui."}); }
