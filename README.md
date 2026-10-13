@@ -6,6 +6,7 @@ Tämä on **täysin erillinen GitHub/Vercel-projekti** salibandyn lähetysgrafii
 
 - `index.html` – aloitussivu ja linkit grafiikoihin
 - `salibandy-tulostaulu.html` – tulostaulu
+- `salibandy-eratauko.html` – erätauon grafiikka, oletusleveys 1400 px
 - `salibandy-lowerthird.html` – maalintekijägrafiikka
 - `salibandy-selostaja.html` – selostajan nimigrafiikka (oletus: Jussi Valli)
 - `salibandy-tilastot.html` – tilastot
@@ -60,7 +61,7 @@ Lisää muuttujat Vercelin Project Settings → Environment Variables -osiossa j
 
 ## Grafiikoiden oletusnäkyvyys
 
-Tulostaulu, tilastot, Lower Third ja kokoonpanot näkyvät oletuksena heti, eikä niiden näkyvyys riipu etäohjauksen/Upstashin asetuksista. Etäohjaus ja sen API-tiedostot ovat edelleen mukana paketissa valinnaista käyttöönottoa varten. Jos haluat yksittäisen grafiikan näkyvyyden etäohjauksen alaisuuteen, lisää sen URL-osoitteeseen `&remote=1` (tai jos URL:ssa ei ole kysymysmerkkiä, `?remote=1`). Ilman tätä parametria grafiikka pysyy päällä.
+Tulostaulu, tilastot, Lower Third, erätauko ja kokoonpanot näkyvät oletuksena heti, eikä niiden näkyvyys riipu etäohjauksen/Upstashin asetuksista. Etäohjaus ja sen API-tiedostot ovat edelleen mukana paketissa valinnaista käyttöönottoa varten. Jos haluat yksittäisen grafiikan näkyvyyden etäohjauksen alaisuuteen, lisää sen URL-osoitteeseen `&remote=1` (tai jos URL:ssa ei ole kysymysmerkkiä, `?remote=1`). Ilman tätä parametria grafiikka pysyy päällä.
 
 
 ## Reaaliaikainen pelikello
@@ -151,7 +152,7 @@ Esimerkki: `salibandy-tulostaulu.html?width=650&height=90&offsetX=50&offsetY=40`
 
 Esikatseluun voi lisätä `debug=1`, jolloin sivun oikeaan alakulmaan tulee näkyvien mittojen diagnostiikka. Tulostaulussa sama diagnostiikka näyttää lisäksi TorneoPalin `live_A/live_B`- ja `fs_A/fs_B`-arvot, ruudulla näytettävän tuloksen sekä mahdollisen vanhan tuloksen vahvistuksen. Selaimen konsoliin kirjataan samat tulostiedot päivityksittäin. Tulostaulun suojaus hyväksyy maalimäärän pienentymisen vasta, kun sama alempi tulos on nähty vähintään viidessä kyselyssä ja vähintään 12 sekunnin ajan; suurempi tulos hyväksytään heti.
 
-Oletusleveydet: tulostaulu 575 px; tehopelaajat 575 px; tilastot 1400 px; Lower Third 1400 px; ottelun tapahtumat 1200 px; kokoonpanot 840 px; sarjataulukko 1100 px. Korkeus on oletuksena automaattinen ja riippuu näkymän sisällöstä.
+Oletusleveydet: tulostaulu 575 px; erätauko 1400 px; tehopelaajat 575 px; tilastot 1400 px; Lower Third 1400 px; ottelun tapahtumat 1200 px; kokoonpanot 840 px; sarjataulukko 1100 px. Korkeus on oletuksena automaattinen ja riippuu näkymän sisällöstä.
 
 
 ## Viimeisimmät ulkoasumuutokset
@@ -191,3 +192,10 @@ Oletusleveydet: tulostaulu 575 px; tehopelaajat 575 px; tilastot 1400 px; Lower 
 ## Selostaja-grafiikka
 
 Avaa `salibandy-selostaja.html`. Nimi vaihdetaan URL-parametrilla `name`, esimerkiksi `salibandy-selostaja.html?name=Maija%20Meik%C3%A4l%C3%A4inen`. Oletusnimi on Jussi Valli. Oletussijainti on 40 px ylhäältä ja 30 px oikealta. Valinnaiset parametrit: `width` (leveys pikseleinä), `scale` (skaalaus), `offsetY` (yläreuna pikseleinä) ja `offsetX` (oikea reuna pikseleinä).
+
+
+## Erätauko-grafiikka
+
+Avaa `salibandy-eratauko.html`. Oletusleveys on 1400 px. Joukkueiden logot ovat grafiikan ulkoreunoissa, nimet niiden sisäpuolella ja tulos keskellä keltaisessa suorakulmiossa. Grafiikka hakee automaattisesti valitun oletusottelun tiedot; ottelun voi ohittaa parametreilla `?match_id=OTTELUN_ID`, `width`, `scale`, `offsetX`, `offsetY` ja `refresh`. `?preview=1` näyttää esimerkin 5–3-tilanteesta. Jos haluat ohjata näkyvyyttä grafiikkaohjauksesta, lisää URL-parametri `remote=1`; grafiikan avain on `breaktime`.
+
+Kentälliset-grafiikan oikean joukkueen nimi on tasattu oikealle logon viereen.

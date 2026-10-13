@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Salibandy · Erätauko</title>
+<style>
+:root{--ink:#101820;--panel:#1b2a35;--accent:#e8c547;--white:#fff;--muted:#bdc7d0;--scale:1;--gfx-width:1400px;--offset-x:0px;--offset-y:0px}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;background:transparent;overflow:hidden}
+body{font-family:Arial,Helvetica,sans-serif;color:var(--white);font-variant-numeric:tabular-nums}
+.gfx{opacity:1;transition:opacity .25s ease;filter:drop-shadow(0 4px 10px rgba(0,0,0,.32))}
+body.gfx-hidden .gfx{opacity:0;pointer-events:none}
+.hidden{display:none!important}
+.stage{position:absolute;left:calc(50% + var(--offset-x));bottom:calc(55px - var(--offset-y));width:var(--gfx-width);max-width:calc(100vw - 16px);transform:translateX(-50%) scale(var(--scale));transform-origin:bottom center}
+.breakbar{width:100%;height:142px;display:grid;grid-template-columns:minmax(0,1fr) 280px minmax(0,1fr);background:var(--ink);border-bottom:5px solid var(--accent);overflow:hidden}
+.team{display:flex;align-items:center;gap:22px;min-width:0;padding:20px 28px;background:rgba(16,24,32,.98)}
+.team.a{justify-content:flex-start}
+.team.b{justify-content:flex-end;text-align:right}
+.team-name{flex:1 1 auto;min-width:0;font-size:clamp(24px,2.35vw,38px);font-weight:900;text-transform:uppercase;line-height:1.04;overflow-wrap:anywhere}
+.logo-wrap,.logo-fallback{width:86px;height:86px;flex:0 0 86px;display:flex;align-items:center;justify-content:center}
+.club-logo{display:block;width:100%;height:100%;object-fit:contain}
+.logo-fallback{border:2px solid var(--accent);border-radius:50%;background:#1b2a35;color:var(--accent);font-size:25px;font-weight:900;text-align:center}
+.center{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-width:0;padding:12px 8px;background:var(--accent);color:var(--ink)}
+.center-label{font-size:17px;font-weight:900;letter-spacing:.12em;line-height:1.1;text-transform:uppercase}
+.score{margin-top:9px;font-size:54px;font-weight:900;line-height:1;white-space:nowrap}
+.err{position:fixed;left:8px;bottom:8px;z-index:2147483647;max-width:calc(100vw - 16px);background:rgba(16,24,32,.97);border-left:4px solid var(--accent);padding:10px 14px;color:#fff;font-size:14px}
+@media(max-width:900px){.breakbar{height:105px;grid-template-columns:minmax(0,1fr) 164px minmax(0,1fr)}.team{gap:9px;padding:10px}.team-name{font-size:clamp(13px,2.2vw,23px)}.logo-wrap,.logo-fallback{width:52px;height:52px;flex-basis:52px}.logo-fallback{font-size:16px}.center-label{font-size:11px;letter-spacing:.08em}.score{font-size:34px;margin-top:6px}}
+@media(max-width:500px){.breakbar{height:78px;grid-template-columns:minmax(0,1fr) 100px minmax(0,1fr)}.team{gap:5px;padding:5px}.team-name{font-size:clamp(10px,2.5vw,14px)}.logo-wrap,.logo-fallback{width:34px;height:34px;flex-basis:34px}.logo-fallback{font-size:11px}.center-label{font-size:8px}.score{font-size:23px;margin-top:4px}}
+</style>
+</head>
+<body>
+<div class="gfx stage" id="stage">
+  <div class="breakbar" role="img" aria-label="Erätauon ottelutilanne">
+    <div class="team a"><div id="logoA" class="logo-fallback">A</div><div id="teamAName" class="team-name">KOTI</div></div>
+    <div class="center"><div class="center-label">ERÄTAUKO</div><div id="score" class="score">0 – 0</div></div>
+    <div class="team b"><div id="teamBName" class="team-name">VIERAS</div><div id="logoB" class="logo-fallback">B</div></div>
+  </div>
+</div>
+<div id="error" class="err hidden"></div>
+<script>
+'use strict';
+const q=new URLSearchParams(location.search);
+let matchId=q.get('match_id')||q.get('ottelu')||q.get('match')||'';
+let defaultMatchPromise=null;
+async function ensureMatchId(){
+  if(matchId)return matchId;
+  if(!defaultMatchPromise)defaultMatchPromise=fetch('/api/salibandy-default-match',{cache:'no-store'}).then(r=>r.json()).then(d=>{matchId=String(d.match_id||'953141');return matchId}).catch(()=>{matchId='953141';return matchId});
+  return defaultMatchPromise;
+}
+const refresh=Math.max(3,Math.min(60,Number(q.get('refresh')||3)||3));
+const widthRaw=Number(q.get('width')||1400),width=Number.isFinite(widthRaw)?Math.max(500,Math.min(2400,widthRaw)):1400;
+const scaleRaw=Number(q.get('scale')||1),scale=Number.isFinite(scaleRaw)?Math.max(.5,Math.min(2.5,scaleRaw)):1;
+const offsetXRaw=Number(q.get('offsetX')||0),offsetX=Number.isFinite(offsetXRaw)?Math.max(-3000,Math.min(3000,offsetXRaw)):0;
+const offsetYRaw=Number(q.get('offsetY')||0),offsetY=Number.isFinite(offsetYRaw)?Math.max(-3000,Math.min(3000,offsetYRaw)):0;
+const root=document.documentElement;
+root.style.setProperty('--gfx-width',width+'px');root.style.setProperty('--scale',String(scale));root.style.setProperty('--offset-x',offsetX+'px');root.style.setProperty('--offset-y',offsetY+'px');
+const $=id=>document.getElementById(id);
+function setText(id,value){const el=$(id);if(el)el.textContent=value??''}
+function teamFields(m){return {a:{name:m.team_A_name||m.club_A_name||'KOTI',logo:m.club_A_crest||m.team_A_crest||''},b:{name:m.team_B_name||m.club_B_name||'VIERAS',logo:m.club_B_crest||m.team_B_crest||''}}}
+function setLogo(id,url,name){
+  const el=$(id);if(!el)return;
+  const fallback=()=>{el.className='logo-fallback';el.textContent=(String(name||'?').trim().split(/\s+/).slice(0,2).map(x=>x[0]||'').join('')||'?').toUpperCase()};
+  el.replaceChildren();
+  if(url&&/^https?:\/\//i.test(url)){
+    const img=document.createElement('img');img.className='club-logo';img.alt='';img.src=url;img.onerror=()=>fallback();el.className='logo-wrap';el.appendChild(img);
+  }else fallback();
+}
+function showError(err){const el=$('error');el.textContent='Salibandy: '+(err?.message||err);el.classList.remove('hidden')}
+function clearError(){$('error').classList.add('hidden')}
+async function getMatch(){
+  await ensureMatchId();
+  const u=new URL('/api/salibandy-match',location.origin);u.searchParams.set('match_id',matchId);u.searchParams.set('timeStamp',Date.now());
+  const r=await fetch(u,{cache:'no-store'});const d=await r.json();
+  if(!r.ok)throw Error(d?.error||('API vastasi '+r.status));
+  if(d.call?.status&&d.call.status!=='ok')throw Error('TorneoPal: '+d.call.status);
+  if(!d.match)throw Error('Ottelutietoja ei löytynyt.');return d.match;
+}
+function parseScoreValue(value){if(value===null||value===undefined||String(value).trim()==='')return null;const n=Number(value);return Number.isInteger(n)&&n>=0?n:null}
+function getRawScore(m){const liveA=parseScoreValue(m.live_A),liveB=parseScoreValue(m.live_B),finalA=parseScoreValue(m.fs_A),finalB=parseScoreValue(m.fs_B);return {a:liveA??finalA,b:liveB??finalB}}
+let acceptedScore=null,pendingLowerScore='',pendingLowerSince=0,pendingLowerCount=0,currentMatchKey='',updateInFlight=false;
+const LOWER_SCORE_CONFIRM_MS=12000,LOWER_SCORE_CONFIRM_READS=5;
+function clearPendingLowerScore(){pendingLowerScore='';pendingLowerSince=0;pendingLowerCount=0}
+function updateScore(m){
+  const key=String(matchId||m.match_id||m.id||'unknown');
+  if(currentMatchKey&&key!==currentMatchKey){acceptedScore=null;clearPendingLowerScore()}
+  currentMatchKey=key;
+  const candidate=getRawScore(m),now=Date.now();
+  if(candidate.a===null||candidate.b===null)return acceptedScore||{a:0,b:0};
+  if(!acceptedScore){acceptedScore={...candidate};clearPendingLowerScore()}
+  else{
+    const same=candidate.a===acceptedScore.a&&candidate.b===acceptedScore.b;
+    const nonDecreasing=candidate.a>=acceptedScore.a&&candidate.b>=acceptedScore.b;
+    if(same)clearPendingLowerScore();
+    else if(nonDecreasing){acceptedScore={...candidate};clearPendingLowerScore()}
+    else{
+      const scoreKey=candidate.a+'-'+candidate.b;
+      if(scoreKey!==pendingLowerScore){pendingLowerScore=scoreKey;pendingLowerSince=now;pendingLowerCount=1}else pendingLowerCount++;
+      if(pendingLowerCount>=LOWER_SCORE_CONFIRM_READS&&now-pendingLowerSince>=LOWER_SCORE_CONFIRM_MS){acceptedScore={...candidate};clearPendingLowerScore()}
+    }
+  }
+  if(q.get('debug')==='1')console.debug('[Salibandy erätauko]',{at:new Date(now).toISOString(),matchId:currentMatchKey,raw:getRawScore(m),shown:acceptedScore,pendingLowerScore,pendingLowerCount});
+  return acceptedScore||candidate;
+}
+async function update(){
+  if(updateInFlight)return;updateInFlight=true;
+  try{const m=await getMatch(),t=teamFields(m),sc=updateScore(m);setText('teamAName',t.a.name);setText('teamBName',t.b.name);setLogo('logoA',t.a.logo,t.a.name);setLogo('logoB',t.b.logo,t.b.name);setText('score',String(sc.a)+' – '+String(sc.b));clearError()}
+  catch(e){showError(e)}finally{updateInFlight=false}
+}
+async function updateVisibility(){try{const r=await fetch('/api/salibandy-graphics-state',{cache:'no-store'});if(!r.ok)return;const state=await r.json();document.body.classList.toggle('gfx-hidden',state.breaktime!==true)}catch{}}
+function startVisibility(){if(q.get('remote')!=='1'){document.body.classList.remove('gfx-hidden');return}document.body.classList.add('gfx-hidden');updateVisibility();setInterval(updateVisibility,2000)}
+startVisibility();
+if(q.get('preview')==='1'){
+  setText('teamAName','PTU');setText('teamBName','SB VAASA/NJ');setLogo('logoA','', 'PTU');setLogo('logoB','', 'SB VAASA/NJ');setText('score','5 – 3');
+}else{update();setInterval(update,refresh*1000)}
+</script>
+</body>
+</html>
