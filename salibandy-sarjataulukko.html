@@ -30,7 +30,7 @@ tbody tr.featured{background:#263b48;box-shadow:inset 4px 0 0 var(--accent)}
 <div class="gfx stage">
  <div class="heading"><div class="heading-title">Sarjataulukko</div><div class="competition" id="competition">SALIBANDY · SARJA</div></div>
  <div class="subheading" id="group">Ladataan ottelun sarjaa…</div>
- <table><thead><tr><th>Sij.</th><th>Joukkue</th><th>O</th><th>V</th><th>T</th><th>H</th><th>M</th><th>ME</th><th>P</th></tr></thead><tbody id="rows"><tr><td colspan="9" style="text-align:center;padding:24px">Haetaan sarjataulukkoa…</td></tr></tbody></table>
+ <table><thead><tr><th>Sij.</th><th>Joukkue</th><th>O</th><th>V</th><th>JV</th><th>JH</th><th>H</th><th>M</th><th>ME</th><th>P</th></tr></thead><tbody id="rows"><tr><td colspan="10" style="text-align:center;padding:24px">Haetaan sarjataulukkoa…</td></tr></tbody></table>
  <div class="note" id="note">Tiedot haetaan ottelun sarjan TorneoPal-datasta.</div>
 </div><div id="error" class="err hidden"></div>
 <script>
@@ -45,6 +45,9 @@ function num(o,keys){const n=Number(val(o,keys,NaN));return Number.isFinite(n)?n
 function rowData(t,i){
  const played=num(t,['matches_played','played','matches','games_played','games'])??0;
  const won=num(t,['matches_won','won','wins'])??0;
+ // TorneoPal-kokoonpanoissa jatkoaikatilastojen kenttänimet voivat vaihdella.
+ const otWon=num(t,['matches_won_overtime','matches_won_ot','matches_won_extra_time','won_overtime','overtime_wins','wins_overtime','matches_won_after_overtime','matches_won_after_extra_time','matches_won_jv']);
+ const otLost=num(t,['matches_lost_overtime','matches_lost_ot','matches_lost_extra_time','lost_overtime','overtime_losses','losses_overtime','matches_lost_after_overtime','matches_lost_after_extra_time','matches_lost_jh']);
  const tied=num(t,['matches_tied','tied','draws'])??0;
  const lost=num(t,['matches_lost','lost','losses'])??0;
  const gf=num(t,['goals_for','goals_scored','score_for','gf','goals_A']);
@@ -54,20 +57,20 @@ function rowData(t,i){
  const diff=gd!==null?gd:(gf!==null&&ga!==null?gf-ga:null);
  const points=num(t,['points','total_points','p'])??0;
  const rank=num(t,['current_standing','standing','position','rank'])??(i+1);
- return {t,played,won,tied,lost,goals,diff,points,rank};
+ return {t,played,won,otWon,otLost,tied,lost,goals,diff,points,rank};
 }
 function render(data){
  const m=data.match||{},teams=Array.isArray(data.teams)?data.teams:[];
  $('competition').textContent=[m.competition_name,m.category_name].filter(Boolean).join(' · ')||'SALIBANDY · SARJA';
  $('group').textContent=[m.category_name,m.group_name].filter(Boolean).join(' · ')||'SARJATAULUKKO';
- if(!teams.length){$('rows').innerHTML='<tr><td colspan="9" style="text-align:center;padding:24px">Sarjataulukon joukkueita ei saatu lähdedatasta.</td></tr>';$('note').textContent='Tarkista, että ottelulle on julkaistu sarjataulukko.';return}
+ if(!teams.length){$('rows').innerHTML='<tr><td colspan="10" style="text-align:center;padding:24px">Sarjataulukon joukkueita ei saatu lähdedatasta.</td></tr>';$('note').textContent='Tarkista, että ottelulle on julkaistu sarjataulukko.';return}
  const A=String(m.team_A_id||''),B=String(m.team_B_id||'');
  const sorted=teams.map(rowData).sort((a,b)=>a.rank-b.rank||b.points-a.points);
  $('rows').innerHTML=sorted.map(x=>{
    const id=String(val(x.t,['team_id','id'],''));
    const featured=(id&&[A,B].includes(id))?'featured':'';
    const name=val(x.t,['team_name','name'],'Tuntematon joukkue');
-   return `<tr class="${featured}"><td class="rank">${esc(x.rank)}</td><td class="team">${esc(name)}</td><td>${esc(val(x.t,['matches_played','played','matches','games_played','games'],x.played))}</td><td>${esc(val(x.t,['matches_won','won','wins'],x.won))}</td><td>${esc(val(x.t,['matches_tied','tied','draws'],x.tied))}</td><td>${esc(val(x.t,['matches_lost','lost','losses'],x.lost))}</td><td>${esc(x.goals)}</td><td>${x.diff===null?'—':(x.diff>0?'+':'')+esc(x.diff)}</td><td class="points">${esc(x.points)}</td></tr>`;
+   return `<tr class="${featured}"><td class="rank">${esc(x.rank)}</td><td class="team">${esc(name)}</td><td>${esc(val(x.t,['matches_played','played','matches','games_played','games'],x.played))}</td><td>${esc(val(x.t,['matches_won','won','wins'],x.won))}</td><td>${x.otWon===null?'—':esc(x.otWon)}</td><td>${x.otLost===null?'—':esc(x.otLost)}</td><td>${esc(val(x.t,['matches_lost','lost','losses'],x.lost))}</td><td>${esc(x.goals)}</td><td>${x.diff===null?'—':(x.diff>0?'+':'')+esc(x.diff)}</td><td class="points">${esc(x.points)}</td></tr>`;
  }).join('');
  $('note').textContent='Ottelun joukkueet on korostettu keltaisella reunuksella. Tiedot: TorneoPal.';
  $('error').classList.add('hidden');
