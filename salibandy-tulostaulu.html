@@ -91,6 +91,25 @@ document.documentElement.style.setProperty('--scale',scale);
 document.documentElement.style.setProperty('--gfx-width',width+'px');
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const delaySeconds=Math.max(0,Math.min(300,Number(q.get('delay')||0)||0));
+const delayMs=delaySeconds*1000;
+const delayStoragePrefix=kind=>'sabalive-scoreboard-delay-v1:'+String(matchId||'default')+':'+delaySeconds+':'+kind;
+function readDelayQueue(kind){
+ try{const v=JSON.parse(localStorage.getItem(delayStoragePrefix(kind))||'[]');return Array.isArray(v)?v.filter(x=>x&&Number.isFinite(x.at)&&x.data):[];}catch{return []}
+}
+function writeDelayQueue(kind,queue){
+ try{localStorage.setItem(delayStoragePrefix(kind),JSON.stringify(queue.slice(-600)));}catch{}
+}
+function enqueueAndRelease(kind,data){
+ if(delayMs<=0)return [data];
+ const now=Date.now(),queue=readDelayQueue(kind);
+ queue.push({at:now,data});
+ const cutoff=now-delayMs;
+ const ready=[],pending=[];
+ for(const item of queue){if(item.at<=cutoff)ready.push(item.data);else pending.push(item);}
+ writeDelayQueue(kind,pending);
+ return ready;
+}
 let latestLiveScore=null;let lastScoreFetchMetrics=null;let lastMatchFetchMetrics=null;let liveUpdateInFlight=false;
 async function getMatch(){
  await ensureMatchId();const u=new URL('/api/salibandy-match',location.origin);u.searchParams.set('match_id',matchId);u.searchParams.set('timeStamp',Date.now());
@@ -108,7 +127,7 @@ function updateDebugPanel(){
  const panel=$('debugPanel');if(!panel||q.get('debug')!=='1')return;panel.classList.remove('hidden');
  const fmt=v=>v===null||v===undefined||v===''?'—':String(v);const s=lastScoreFetchMetrics||{},m=lastMatchFetchMetrics||{};const shown=acceptedScore||{a:'—',b:'—'};
  const age=ts=>{if(!ts)return '—';const d=Date.parse(String(ts).replace(' ','T'));return Number.isFinite(d)?Math.round((Date.now()-d)/1000)+' s sitten (palvelimen aikavyöhyke voi vaikuttaa)':'—'};
- panel.textContent='SABALIVE LIVE-DIAGNOSTIIKKA\nOttelu: '+fmt(matchId)+'\nNäytetty tulos: '+shown.a+' – '+shown.b+'\n\ngetScore (nopea)\nHTTP: '+fmt(s.httpStatus)+' · selainpyyntö: '+fmt(s.roundTripMs)+' ms · palvelinpyyntö: '+fmt(s.serverRoundTripMs)+' ms\nVastaanotettu: '+fmt(s.receivedAt)+'\nLähteen last_modified: '+fmt(s.sourceLastModified)+' · '+age(s.sourceLastModified)+'\nLive-tulos: '+fmt(s.liveA)+' – '+fmt(s.liveB)+' · tila: '+fmt(s.status)+' · kello käy: '+fmt(s.timerOn)+'\nVirhe: '+fmt(s.error)+'\n\ngetMatch (yksityiskohdat)\nHTTP: '+fmt(m.httpStatus)+' · selainpyyntö: '+fmt(m.roundTripMs)+' ms\nVastaanotettu: '+fmt(m.receivedAt)+'\nLähteen last_modified: '+fmt(m.sourceLastModified)+'\nLive/fs: '+fmt(m.liveA)+'–'+fmt(m.liveB)+' / '+fmt(m.fsA)+'–'+fmt(m.fsB)+'\nVirhe: '+fmt(m.error)+'\n\nLive-kyselyväli: '+scoreRefresh+' s · yksityiskohtien väli: '+refresh+' s';
+ panel.textContent='SABALIVE LIVE-DIAGNOSTIIKKA\nOttelu: '+fmt(matchId)+'\nNäytetty tulos: '+shown.a+' – '+shown.b+'\n\ngetScore (nopea)\nHTTP: '+fmt(s.httpStatus)+' · selainpyyntö: '+fmt(s.roundTripMs)+' ms · palvelinpyyntö: '+fmt(s.serverRoundTripMs)+' ms\nVastaanotettu: '+fmt(s.receivedAt)+'\nLähteen last_modified: '+fmt(s.sourceLastModified)+' · '+age(s.sourceLastModified)+'\nLive-tulos: '+fmt(s.liveA)+' – '+fmt(s.liveB)+' · tila: '+fmt(s.status)+' · kello käy: '+fmt(s.timerOn)+'\nVirhe: '+fmt(s.error)+'\n\ngetMatch (yksityiskohdat)\nHTTP: '+fmt(m.httpStatus)+' · selainpyyntö: '+fmt(m.roundTripMs)+' ms\nVastaanotettu: '+fmt(m.receivedAt)+'\nLähteen last_modified: '+fmt(m.sourceLastModified)+'\nLive/fs: '+fmt(m.liveA)+'–'+fmt(m.liveB)+' / '+fmt(m.fsA)+'–'+fmt(m.fsB)+'\nVirhe: '+fmt(m.error)+'\n\nViive: '+delaySeconds+' s · Live-kyselyväli: '+scoreRefresh+' s · yksityiskohtien väli: '+refresh+' s';
 }
 
 function setText(id,value){const e=$(id);if(e)e.textContent=value??''}
@@ -265,12 +284,12 @@ function renderEvents(m){
  activeEvents.splice(3);
  const el=$('events');if(el)el.innerHTML=activeEvents.map(x=>eventMarkup(x.event,x.match)).join('');
 }
-async function updateDetails(){if(updateInFlight)return;updateInFlight=true;try{const m=await getMatch();ensureMatchState(m);const t=teamFields(m);setText('teamA',t.a.name);setText('teamB',t.b.name);setLogo('logoA',t.a.logo,t.a.name);setLogo('logoB',t.b.logo,t.b.name);
+async function updateDetails(){if(updateInFlight)return;updateInFlight=true;try{const fetched=await getMatch();const released=enqueueAndRelease('match',fetched);for(const m of released){ensureMatchState(m);const t=teamFields(m);setText('teamA',t.a.name);setText('teamB',t.b.name);setLogo('logoA',t.a.logo,t.a.name);setLogo('logoB',t.b.logo,t.b.name);
  // Use getMatch only as a temporary first-load fallback. Once getScore responds, it owns score and clock.
- if(!latestLiveScore){const sc=updateScore(m);setText('clock',clockMode==='period'?(periodLabel(m)||'—'):(matchClock(m)||''));}
- const eventScore=acceptedScore||{a:m.live_A??m.fs_A??0,b:m.live_B??m.fs_B??0};renderEvents({...m,live_A:eventScore.a,live_B:eventScore.b});clearError();updateDebugPanel()
+ if(!latestLiveScore){updateScore(m);setText('clock',clockMode==='period'?(periodLabel(m)||'—'):(matchClock(m)||''));}
+ const eventScore=acceptedScore||{a:m.live_A??m.fs_A??0,b:m.live_B??m.fs_B??0};renderEvents({...m,live_A:eventScore.a,live_B:eventScore.b});}clearError();updateDebugPanel()
  }catch(e){showError(e)}finally{updateInFlight=false}}
-async function updateLive(){if(liveUpdateInFlight)return;liveUpdateInFlight=true;try{const live=await getLiveScore();ensureMatchState(live);latestLiveScore=live;updateScore(live);setText('clock',clockMode==='period'?(periodLabel(live)||'—'):(matchClock(live)||''));if(lastScoreFetchMetrics)lastScoreFetchMetrics.scoreDisplayed=acceptedScore?acceptedScore.a+' – '+acceptedScore.b:'';updateDebugPanel();if(q.get('debug')==='1')console.debug('[Sabalive getScore]',{metrics:lastScoreFetchMetrics,raw:{live_A:live.live_A,live_B:live.live_B,fs_A:live.fs_A,fs_B:live.fs_B,status:live.status,live_time:live.live_time,live_time_mmss:live.live_time_mmss,live_timer_on:live.live_timer_on,last_modified:live.last_modified},displayed:acceptedScore})}catch(e){if(!latestLiveScore)showError(e);if(q.get('debug')==='1')console.warn('[Sabalive getScore] epäonnistui',e)}finally{liveUpdateInFlight=false}}
+async function updateLive(){if(liveUpdateInFlight)return;liveUpdateInFlight=true;try{const fetched=await getLiveScore();const released=enqueueAndRelease('score',fetched);for(const live of released){ensureMatchState(live);latestLiveScore=live;updateScore(live);setText('clock',clockMode==='period'?(periodLabel(live)||'—'):(matchClock(live)||''));}if(lastScoreFetchMetrics)lastScoreFetchMetrics.scoreDisplayed=acceptedScore?acceptedScore.a+' – '+acceptedScore.b:'';updateDebugPanel();if(q.get('debug')==='1')console.debug('[Sabalive getScore]',{metrics:lastScoreFetchMetrics,raw:{live_A:fetched.live_A,live_B:fetched.live_B,fs_A:fetched.fs_A,fs_B:fetched.fs_B,status:fetched.status,live_time:fetched.live_time,live_time_mmss:fetched.live_time_mmss,live_timer_on:fetched.live_timer_on,last_modified:fetched.last_modified},displayed:acceptedScore,delaySeconds})}catch(e){if(!latestLiveScore)showError(e);if(q.get('debug')==='1')console.warn('[Sabalive getScore] epäonnistui',e)}finally{liveUpdateInFlight=false}}
 startVisibility('scorebug',true);
 if(q.get('preview')==='1'){
  setText('teamA','PIRKAT');setText('teamB','JOSBA');setText('score','3 – 2');setText('clock',clockMode==='period'?(normalizePeriod(requestedPeriod)||'3. ERÄ'):'20:00');

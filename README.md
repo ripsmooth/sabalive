@@ -106,6 +106,12 @@ Jos rajapinta ei palauta voimassa olevaa erätietoa, grafiikka näyttää viivan
 
 
 
+## Tulostaulun lähetysviive
+
+Tulostaulun voi viivästää URL-parametrilla `delay` sekunteina. Esimerkiksi `?match_id=935611&delay=15` näyttää tulostaulun tulos- ja ottelutietojen päivitykset noin 15 sekuntia niiden vastaanottamisen jälkeen. `delay=0` tai parametrin puuttuminen säilyttää normaalin reaaliaikaisen toiminnan. Suurin sallittu arvo on 300 sekuntia.
+
+Viivejono tallennetaan saman selaimen paikalliseen tallennustilaan, jotta sivun uudelleenlataus ei normaalisti ohita viivettä. Viive toimii parhaiten, kun OBS:n selainlähde pysyy samalla selaimen tallennustilalla käytössä. Ensimmäisellä käyttökerralla tai tyhjennetyllä selaintallennustilalla tulostaulu odottaa viiveen täyttymistä ennen uusien tietojen näyttämistä. Viiveen tarkkuus riippuu päivitysvälistä ja on yleensä noin yhden kyselyvälin sisällä asetetusta arvosta.
+
 ## Tulostaulun asettelu – viimeisin viilaus
 
 - Vierasjoukkueen nimi näkyy ennen logoa; logo sijoittuu oikeaan reunaan.
