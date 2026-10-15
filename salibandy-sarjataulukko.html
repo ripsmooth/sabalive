@@ -45,10 +45,10 @@ function num(o,keys){const n=Number(val(o,keys,NaN));return Number.isFinite(n)?n
 function rowData(t,i){
  const played=num(t,['matches_played','played','matches','games_played','games'])??0;
  const won=num(t,['matches_won','won','wins'])??0;
- // TorneoPal-kokoonpanoissa jatkoaikatilastojen kenttänimet voivat vaihdella.
- const otWon=num(t,['matches_won_overtime','matches_won_ot','matches_won_extra_time','won_overtime','overtime_wins','wins_overtime','matches_won_after_overtime','matches_won_after_extra_time','matches_won_jv']);
- const otLost=num(t,['matches_lost_overtime','matches_lost_ot','matches_lost_extra_time','lost_overtime','overtime_losses','losses_overtime','matches_lost_after_overtime','matches_lost_after_extra_time','matches_lost_jh']);
- const tied=num(t,['matches_tied','tied','draws'])??0;
+ // TorneoPalin viralliset sarjataulukkokentät: matches_tiedwon = JV ja matches_tied = JH.
+ const otWon=num(t,['matches_tiedwon','matches_won_overtime','matches_won_ot','matches_won_extra_time','won_overtime','overtime_wins','wins_overtime','matches_won_after_overtime','matches_won_after_extra_time','matches_won_jv']);
+ const otLost=num(t,['matches_tied','matches_lost_overtime','matches_lost_ot','matches_lost_extra_time','lost_overtime','overtime_losses','losses_overtime','matches_lost_after_overtime','matches_lost_after_extra_time','matches_lost_jh']);
+ const tied=0; // matches_tied on TorneoPal means jatkoaikatappiot and is shown in JH, not a separate draw column.
  const lost=num(t,['matches_lost','lost','losses'])??0;
  const gf=num(t,['goals_for','goals_scored','score_for','gf','goals_A']);
  const ga=num(t,['goals_against','goals_conceded','score_against','ga','goals_B']);
