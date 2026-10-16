@@ -1,4 +1,4 @@
-<!doctype html><html lang="fi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Salibandy · Tulostaulu</title><style>
+<!doctype html><html lang="fi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Salibandy · Tulostaulu – vaihtoehto 2</title><style>
 
 :root{--ink:#101820;--panel:#1b2a35;--accent:#e8c547;--white:#fff;--muted:#bdc7d0;--scale:1;--gfx-width:1400px}
 *{box-sizing:border-box}
@@ -37,11 +37,68 @@ body.gfx-hidden .gfx{opacity:0;pointer-events:none}
 @keyframes eventIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:480px){.event-row{grid-template-columns:72px minmax(0,1fr) 30px;min-height:48px}.event-time{font-size:12px}.event-player{font-size:12px}.event-detail{font-size:10px}.event-main{padding:5px 7px}}
 @media(max-width:480px){.scorebug{grid-template-columns:minmax(0,1fr) 78px minmax(0,1fr) 56px}.team{gap:4px;padding:3px}.logo,.fallback{width:34px;height:34px;flex-basis:34px}.team-name{font-size:12px}.score{font-size:19px}.clock{font-size:13px}}
-</style></head><body><div class="gfx stage"><div class="scorebug">
+
+/* Erä- ja jäähytiedot kahdessa erillisessä vaihtoehtoisessa layoutissa */
+.scorebug{height:auto;display:flex;flex-direction:column;overflow:visible;background:transparent;gap:0}
+.scorebug-main{width:100%;height:54px;display:grid;grid-template-columns:minmax(0,1fr) 106px minmax(0,1fr) 76px;background:var(--ink);overflow:hidden}
+.clock-box{min-width:0;display:flex;align-items:center;justify-content:center;gap:2px;background:#1b2a35;padding:2px 3px;flex-direction:column}
+.clock-box .clock{background:transparent;font-size:16px;line-height:1.0;padding:0}
+.period-badge{display:block;color:var(--ink);background:var(--accent);border-radius:2px;font-size:9px;font-weight:900;line-height:1.15;padding:2px 5px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+/* Vaihtoehto 2: jäähyt ovat kelluvia ilmoituslaatikoita tulostaulun yläpuolella.
+   Ne eivät lisää tulostaulun korkeutta eivätkä siirrä alla olevaa tapahtumalaatikkoa. */
+.scorebug{position:relative}
+.penalty-floater{position:absolute;left:0;right:0;bottom:calc(100% + 4px);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:end;gap:7px;z-index:20;pointer-events:none}
+.penalty-popup{display:none;align-items:center;gap:6px;min-width:0;max-width:100%;width:max-content;overflow:hidden;background:rgba(16,24,32,.97);border:1px solid var(--accent);border-radius:3px;padding:4px 7px;box-shadow:0 2px 6px rgba(0,0,0,.28)}
+.penalty-popup.active{display:flex}
+/* Koti alkaa täsmälleen tulostaulun vasemmasta reunasta ja vieras päättyy oikeaan reunaan. */
+.penalty-popup.home{justify-self:start;grid-column:1}
+.penalty-popup.away{justify-self:end;grid-column:2}
+.penalty-group{display:flex;align-items:center;gap:7px;min-width:0;overflow:hidden}
+.penalty-chip{display:inline-flex;align-items:center;gap:4px;background:transparent;color:var(--accent);border:0;padding:0;font-size:11px;line-height:1.15;font-weight:900;white-space:nowrap;flex:0 0 auto}
+.penalty-empty{display:none}
+.layout-option2 .penalty-home{justify-content:flex-start}
+.layout-option2 .penalty-away{justify-content:flex-end}
+.layout-option4 .penalty-home{justify-content:flex-start;padding-left:3px}
+.layout-option4 .penalty-away{justify-content:flex-end;padding-right:3px}
+.layout-option4 .clock-box{flex-direction:row;gap:4px}
+.layout-option4 .clock-box .clock{font-size:15px}
+.layout-option4 .period-badge{font-size:9px;padding:3px 4px}
+@media(max-width:480px){
+ .scorebug-main{grid-template-columns:minmax(0,1fr) 78px minmax(0,1fr) 76px;height:48px}
+ .scorebug-main .team{gap:4px;padding:3px}
+ .scorebug-main .logo,.scorebug-main .fallback{width:34px;height:34px;flex-basis:34px}
+ .scorebug-main .team-name{font-size:12px}
+ .scorebug-main .score{font-size:19px}
+ .clock-box .clock{font-size:13px}
+ .period-badge{font-size:8px;padding:2px 3px}
+ .penalty-floater{gap:3px;bottom:calc(100% + 3px)}
+ .penalty-popup{gap:4px;padding:3px 4px;border-radius:2px}
+ .penalty-group{gap:4px}
+ .penalty-chip{font-size:9px;gap:2px}
+}
+@media(max-width:480px){
+ .layout-option4 .scorebug-main{grid-template-columns:minmax(0,1fr) 78px minmax(0,1fr) 98px}
+ .layout-option4 .clock-box .clock{font-size:12px}
+ .layout-option4 .period-badge{font-size:8px;padding:2px 3px}
+}
+/* Vaihtoehto 2: suurennukset, vain tässä layoutissa. Jäähylaatikot kasvavat 25 % ankkuroituna reunoihin. */
+.layout-option2 .penalty-popup.home{transform:scale(1.25);transform-origin:left bottom}
+.layout-option2 .penalty-popup.away{transform:scale(1.25);transform-origin:right bottom}
+.layout-option2 .clock-box .clock{font-size:20px}
+.layout-option2 .period-badge{font-size:11.25px;padding:2.5px 6.25px}
+@media(max-width:480px){
+ .layout-option2 .clock-box .clock{font-size:16.25px}
+ .layout-option2 .period-badge{font-size:10px;padding:3px 4px}
+}
+</style></head><body><div class="gfx stage"><div class="scorebug layout-option2">
+<div class="scorebug-main">
 <div class="team a"><div id="logoA" class="fallback">A</div><div id="teamA" class="team-name">KOTI</div></div>
 <div class="score" id="score">0 – 0</div>
 <div class="team b"><div id="teamB" class="team-name">VIERAS</div><div id="logoB" class="fallback">B</div></div>
-<div class="clock" id="clock">00:00</div></div><div id="events" class="events" aria-live="polite"></div></div><div id="error" class="err hidden"></div><pre id="debugPanel" class="debug-panel hidden"></pre>
+<div class="clock-box"><div id="periodBadge" class="period-badge">1. ERÄ</div><div class="clock" id="clock">00:00</div></div>
+</div>
+<div class="penalty-floater" id="penaltyFloater" aria-live="polite"><div class="penalty-popup home" id="penaltiesHome"><div class="penalty-group penalty-home" id="penaltyTimersHome"></div></div><div class="penalty-popup away" id="penaltiesAway"><div class="penalty-group penalty-away" id="penaltyTimersAway"></div></div></div>
+</div><div id="events" class="events" aria-live="polite"></div></div><div id="error" class="err hidden"></div><pre id="debugPanel" class="debug-panel hidden"></pre>
 <script>
 const q=new URLSearchParams(location.search);
 let matchId=q.get('match_id')||q.get('ottelu')||q.get('match')||'';
@@ -79,7 +136,7 @@ function periodLabel(m){
  return '';
 }
 const offsetX=q.has('offsetX')&&String(q.get('offsetX')).trim()!==''&&Number.isFinite(Number(q.get('offsetX')))?Number(q.get('offsetX')):40;
-const offsetY=q.has('offsetY')&&String(q.get('offsetY')).trim()!==''&&Number.isFinite(Number(q.get('offsetY')))?Number(q.get('offsetY')):30;
+const offsetY=q.has('offsetY')&&String(q.get('offsetY')).trim()!==''&&Number.isFinite(Number(q.get('offsetY')))?Number(q.get('offsetY')):45;
 const scale=Math.max(.5,Math.min(2.5,Number(q.get('scale')||1)));
 const width=Math.max(500,Math.min(1920,Number(q.get('width')||1400)));
 document.documentElement.style.setProperty('--offset-x',offsetX+'px');
@@ -128,6 +185,121 @@ function updateDebugPanel(){
  const fmt=v=>v===null||v===undefined||v===''?'—':String(v);const s=lastScoreFetchMetrics||{},m=lastMatchFetchMetrics||{};const shown=acceptedScore||{a:'—',b:'—'};
  const age=ts=>{if(!ts)return '—';const d=Date.parse(String(ts).replace(' ','T'));return Number.isFinite(d)?Math.round((Date.now()-d)/1000)+' s sitten (palvelimen aikavyöhyke voi vaikuttaa)':'—'};
  panel.textContent='SABALIVE LIVE-DIAGNOSTIIKKA\nOttelu: '+fmt(matchId)+'\nNäytetty tulos: '+shown.a+' – '+shown.b+'\n\ngetScore (nopea)\nHTTP: '+fmt(s.httpStatus)+' · selainpyyntö: '+fmt(s.roundTripMs)+' ms · palvelinpyyntö: '+fmt(s.serverRoundTripMs)+' ms\nVastaanotettu: '+fmt(s.receivedAt)+'\nLähteen last_modified: '+fmt(s.sourceLastModified)+' · '+age(s.sourceLastModified)+'\nLive-tulos: '+fmt(s.liveA)+' – '+fmt(s.liveB)+' · tila: '+fmt(s.status)+' · kello käy: '+fmt(s.timerOn)+'\nVirhe: '+fmt(s.error)+'\n\ngetMatch (yksityiskohdat)\nHTTP: '+fmt(m.httpStatus)+' · selainpyyntö: '+fmt(m.roundTripMs)+' ms\nVastaanotettu: '+fmt(m.receivedAt)+'\nLähteen last_modified: '+fmt(m.sourceLastModified)+'\nLive/fs: '+fmt(m.liveA)+'–'+fmt(m.liveB)+' / '+fmt(m.fsA)+'–'+fmt(m.fsB)+'\nVirhe: '+fmt(m.error)+'\n\nViive: '+delaySeconds+' s · Live-kyselyväli: '+scoreRefresh+' s · yksityiskohtien väli: '+refresh+' s';
+}
+
+
+function updatePeriodBadge(m){
+ const badge=$('periodBadge');
+ if(!badge)return;
+ if(clockMode==='period'){badge.classList.add('hidden');return}
+ badge.classList.remove('hidden');
+ badge.textContent=periodLabel(m)||'—';
+}
+let penaltySourceMatch=null;
+function parsePenaltyTime(value){
+ if(value===null||value===undefined||value==='')return null;
+ const s=String(value).trim();
+ if(/^\d{1,3}:\d{2}:\d{2}$/.test(s)||/^\d{1,3}:\d{2}$/.test(s))return parseClockSeconds(s);
+ if(/^\d+$/.test(s))return Number(s);
+ const m=s.match(/^(\d+(?:\.\d+)?)\s*(?:min|mins|minute|minutes|minuuttia?)$/i);
+ return m?Math.round(Number(m[1])*60):null;
+}
+function currentPeriodClockSeconds(m){
+ if(clockBaseSeconds!==null)return Math.max(0,Math.floor(clockBaseSeconds+(clockIsRunning?(Date.now()-clockReceivedAt)/1000:0)));
+ return parseClockSeconds(m?.live_time_mmss||m?.live_time);
+}
+function periodLengthSeconds(m, periodIndex){
+ const lengths=m?.period_lengths_sec;
+ if(Array.isArray(lengths)&&lengths.length){
+  const raw=lengths[periodIndex-1];
+  const n=Number(raw);
+  if(Number.isFinite(n)&&n>0)return n;
+ }
+ if(lengths&&typeof lengths==='object'){
+  const raw=lengths[periodIndex]??lengths[String(periodIndex)]??lengths['p'+periodIndex]??lengths['p'+(periodIndex-1)];
+  const n=Number(raw);
+  if(Number.isFinite(n)&&n>0)return n;
+ }
+ const regularCount=Math.max(1,Number.parseInt(m?.period_count,10)||3);
+ const normalMin=Number(m?.period_min??m?.period_length_min??m?.period_minutes);
+ const overtimeMin=Number(m?.extra_period_min??m?.extra_period_length_min);
+ const mins=periodIndex>regularCount?(Number.isFinite(overtimeMin)&&overtimeMin>0?overtimeMin:(Number.isFinite(normalMin)&&normalMin>0?normalMin:20)):(Number.isFinite(normalMin)&&normalMin>0?normalMin:20);
+ return Math.round(mins*60);
+}
+function periodStartOffsetSeconds(m, periodIndex){
+ let offset=0;
+ for(let i=1;i<periodIndex;i++)offset+=periodLengthSeconds(m,i);
+ return offset;
+}
+function currentMatchElapsedSeconds(m){
+ const source=latestLiveScore||m;
+ const periodRaw=source?.live_period??source?.period??source?.period_no??source?.period_number??1;
+ const periodIndex=Math.max(1,Number.parseInt(periodRaw,10)||1);
+ const localClock=currentPeriodClockSeconds(source);
+ if(localClock===null)return null;
+ return periodStartOffsetSeconds(m||source,periodIndex)+localClock;
+}
+function penaltyStartMatchSeconds(startSeconds,p,m){
+ const periodRaw=p?.period??p?.period_no??p?.period_number??p?.live_period??latestLiveScore?.live_period??m?.live_period??1;
+ const periodIndex=Math.max(1,Number.parseInt(periodRaw,10)||1);
+ const currentLocalPeriodLength=periodLengthSeconds(m,periodIndex);
+ // TorneoPal's event time can be cumulative (e.g. 25:02 in period 2) or local
+ // to the period (e.g. 05:02 in period 2). For later periods, values at or beyond
+ // the duration of one period are treated as cumulative; shorter values as local.
+ if(periodIndex>1&&startSeconds>=currentLocalPeriodLength)return startSeconds;
+ return periodStartOffsetSeconds(m,periodIndex)+startSeconds;
+}
+function penaltyRemainingSeconds(p, m){
+ const directKeys=['remaining_seconds','seconds_remaining','time_remaining_seconds','penalty_seconds_remaining','live_remaining_seconds'];
+ for(const key of directKeys){const n=Number(p?.[key]);if(p?.[key]!==undefined&&p?.[key]!==null&&p[key]!==''&&Number.isFinite(n))return Math.max(0,Math.floor(n))}
+ const directTextKeys=['remaining_time','time_remaining','time_left','penalty_time_left','remaining_penalty_time'];
+ for(const key of directTextKeys){const sec=parsePenaltyTime(p?.[key]);if(sec!==null)return sec}
+ const durationRaw=p?.duration_seconds??p?.penalty_duration_seconds;
+ let duration=Number(durationRaw);
+ if(!Number.isFinite(duration)||duration<=0){
+  const durationMin=p?.duration_min??p?.penalty_minutes??p?.minutes;
+  duration=Number(durationMin)*60;
+ }
+ if(!Number.isFinite(duration)||duration<=0){
+  const code=String(p?.code||p?.booking_code||p?.penalty_code||'');
+  const mins=code.match(/(\d+(?:\.\d+)?)\s*(?:min|m|minuut)/i)||code.match(/^(\d+(?:\.\d+)?)$/);
+  if(mins)duration=Number(mins[1])*60;
+ }
+ if(!Number.isFinite(duration)||duration<=0)return null;
+ const rawStart=parsePenaltyTime(p?.time??p?.event_time??p?.match_time??p?.clock);
+ const now=currentMatchElapsedSeconds(m);
+ if(rawStart===null||now===null)return null;
+ const start=penaltyStartMatchSeconds(rawStart,p,m);
+ if(now<start)return null;
+ const elapsed=now-start;
+ if(elapsed>=duration)return null;
+ return Math.max(0,Math.floor(duration-elapsed));
+}
+function renderPenaltyTimers(m){
+ penaltySourceMatch=m;
+ const homeId=String(m?.team_A_id??'');
+ const awayId=String(m?.team_B_id??'');
+ const bookings=Array.isArray(m?.bookings)?m.bookings:[];
+ const home=[],away=[];
+ for(const p of bookings){
+  const tid=String(p?.team_id??p?.teamId??p?.team_id_home??'');
+  if(!tid)continue;
+  const remaining=penaltyRemainingSeconds(p,m);
+  if(remaining===null||remaining<=0)continue;
+  const record={number:p?.player_shirt_number??p?.shirt_number??p?.player_number??'',remaining};
+  if(tid===homeId)home.push(record);else if(tid===awayId)away.push(record);
+ }
+ const fmt=n=>Math.floor(n/60)+':'+String(n%60).padStart(2,'0');
+ const makeHTML=list=>list.slice(0,3).map(p=>'<span class="penalty-chip">'+(p.number!==''?'#'+esc(p.number)+' ':'')+esc(fmt(p.remaining))+'</span>').join('');
+ const homeEl=$('penaltiesHome'),awayEl=$('penaltiesAway');
+ const homeTimers=$('penaltyTimersHome'),awayTimers=$('penaltyTimersAway');
+ if(homeTimers)homeTimers.innerHTML=home.length?makeHTML(home):'';
+ if(awayTimers)awayTimers.innerHTML=away.length?makeHTML(away):'';
+ if(homeEl)homeEl.classList.toggle('active',home.length>0);
+ if(awayEl)awayEl.classList.toggle('active',away.length>0);
+}
+function refreshPenaltyTimers(){
+ if(penaltySourceMatch)renderPenaltyTimers(penaltySourceMatch);
 }
 
 function setText(id,value){const e=$(id);if(e)e.textContent=value??''}
@@ -286,19 +458,27 @@ function renderEvents(m){
 }
 async function updateDetails(){if(updateInFlight)return;updateInFlight=true;try{const fetched=await getMatch();const released=enqueueAndRelease('match',fetched);for(const m of released){ensureMatchState(m);const t=teamFields(m);setText('teamA',t.a.name);setText('teamB',t.b.name);setLogo('logoA',t.a.logo,t.a.name);setLogo('logoB',t.b.logo,t.b.name);
  // Use getMatch only as a temporary first-load fallback. Once getScore responds, it owns score and clock.
- if(!latestLiveScore){updateScore(m);setText('clock',clockMode==='period'?(periodLabel(m)||'—'):(matchClock(m)||''));}
- const eventScore=acceptedScore||{a:m.live_A??m.fs_A??0,b:m.live_B??m.fs_B??0};renderEvents({...m,live_A:eventScore.a,live_B:eventScore.b});}clearError();updateDebugPanel()
+ if(!latestLiveScore){updateScore(m);setText('clock',clockMode==='period'?(periodLabel(m)||'—'):(matchClock(m)||''));updatePeriodBadge(m);}
+ const eventScore=acceptedScore||{a:m.live_A??m.fs_A??0,b:m.live_B??m.fs_B??0};renderEvents({...m,live_A:eventScore.a,live_B:eventScore.b});renderPenaltyTimers(m);updatePeriodBadge(latestLiveScore||m);}clearError();updateDebugPanel()
  }catch(e){showError(e)}finally{updateInFlight=false}}
-async function updateLive(){if(liveUpdateInFlight)return;liveUpdateInFlight=true;try{const fetched=await getLiveScore();const released=enqueueAndRelease('score',fetched);for(const live of released){ensureMatchState(live);latestLiveScore=live;updateScore(live);setText('clock',clockMode==='period'?(periodLabel(live)||'—'):(matchClock(live)||''));}if(lastScoreFetchMetrics)lastScoreFetchMetrics.scoreDisplayed=acceptedScore?acceptedScore.a+' – '+acceptedScore.b:'';updateDebugPanel();if(q.get('debug')==='1')console.debug('[Sabalive getScore]',{metrics:lastScoreFetchMetrics,raw:{live_A:fetched.live_A,live_B:fetched.live_B,fs_A:fetched.fs_A,fs_B:fetched.fs_B,status:fetched.status,live_time:fetched.live_time,live_time_mmss:fetched.live_time_mmss,live_timer_on:fetched.live_timer_on,last_modified:fetched.last_modified},displayed:acceptedScore,delaySeconds})}catch(e){if(!latestLiveScore)showError(e);if(q.get('debug')==='1')console.warn('[Sabalive getScore] epäonnistui',e)}finally{liveUpdateInFlight=false}}
+async function updateLive(){if(liveUpdateInFlight)return;liveUpdateInFlight=true;try{const fetched=await getLiveScore();const released=enqueueAndRelease('score',fetched);for(const live of released){ensureMatchState(live);latestLiveScore=live;updateScore(live);setText('clock',clockMode==='period'?(periodLabel(live)||'—'):(matchClock(live)||''));updatePeriodBadge(live);refreshPenaltyTimers();}if(lastScoreFetchMetrics)lastScoreFetchMetrics.scoreDisplayed=acceptedScore?acceptedScore.a+' – '+acceptedScore.b:'';updateDebugPanel();if(q.get('debug')==='1')console.debug('[Sabalive getScore]',{metrics:lastScoreFetchMetrics,raw:{live_A:fetched.live_A,live_B:fetched.live_B,fs_A:fetched.fs_A,fs_B:fetched.fs_B,status:fetched.status,live_time:fetched.live_time,live_time_mmss:fetched.live_time_mmss,live_timer_on:fetched.live_timer_on,last_modified:fetched.last_modified},displayed:acceptedScore,delaySeconds})}catch(e){if(!latestLiveScore)showError(e);if(q.get('debug')==='1')console.warn('[Sabalive getScore] epäonnistui',e)}finally{liveUpdateInFlight=false}}
 startVisibility('scorebug',true);
 if(q.get('preview')==='1'){
- setText('teamA','PIRKAT');setText('teamB','JOSBA');setText('score','3 – 2');setText('clock',clockMode==='period'?(normalizePeriod(requestedPeriod)||'3. ERÄ'):'20:00');
+ setText('teamA','PIRKAT');setText('teamB','JOSBA');setText('score','3 – 2');setText('clock',clockMode==='period'?(normalizePeriod(requestedPeriod)||'3. ERÄ'):'12:34');updatePeriodBadge({live_period:'2'});
  const demo=[
   {event:{_kind:'goal',time:'26:52',score_A:3,score_B:2,player_shirt_number:'2',player_name:'Tiainen Mico-Matias',player_2_name:'Veijalainen Niklas',shirt_2_number:'28'},match:{live_A:3,live_B:2},createdAt:Date.now()},
   {event:{_kind:'penalty',time:'19:10',time_min:'19',code:'2min',description_text:'Varomaton fyysinen pelaaminen',player_shirt_number:'8',player_name:'Jäntti Teemu'},match:{},createdAt:Date.now()},
   {event:{_kind:'goal',time:'16:58',score_A:2,score_B:2,player_shirt_number:'11',player_name:'Myllykangas Tuomo',player_2_name:'Haapaniemi Sauli',shirt_2_number:'44'},match:{live_A:2,live_B:2},createdAt:Date.now()}
  ];activeEvents.push(...demo);$('events').innerHTML=activeEvents.map(x=>eventMarkup(x.event,x.match)).join('');
-}else{const scoreRefresh=Math.max(2,Math.min(10,Number(q.get('scoreRefresh')||2)));updateDetails();setInterval(updateDetails,refresh*1000);updateLive();setInterval(updateLive,scoreRefresh*1000);if(clockMode!=='period')setInterval(tickClock,250);if(q.get('debug')==='1')updateDebugPanel();}
+ const demoMatch={team_A_id:'A',team_B_id:'B',live_period:'2',live_time:'00:12:34',bookings:[
+ {team_id:'A',player_shirt_number:'17',code:'2min',time:'12:10',period:'2'},
+ {team_id:'A',player_shirt_number:'6',code:'2min',time:'11:57',period:'2'},
+ {team_id:'B',player_shirt_number:'8',code:'2min',time:'12:04',period:'2'}
+ ]};
+ latestLiveScore={live_period:'2',live_time:'00:12:34',live_timer_on:'1'};
+ clockBaseSeconds=754;clockReceivedAt=Date.now();clockIsRunning=true;
+ renderPenaltyTimers(demoMatch);
+}else{const scoreRefresh=Math.max(2,Math.min(10,Number(q.get('scoreRefresh')||2)));updateDetails();setInterval(updateDetails,refresh*1000);updateLive();setInterval(updateLive,scoreRefresh*1000);if(clockMode!=='period')setInterval(tickClock,250);setInterval(refreshPenaltyTimers,500);if(q.get('debug')==='1')updateDebugPanel();}
 </script>
 <script>
 /* URL-kohtainen koon hienosäätö: width= ja height= ovat pikseleitä ennen yleistä scale-kerrointa. */
