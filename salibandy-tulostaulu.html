@@ -84,6 +84,9 @@ body.gfx-hidden .gfx{opacity:0;pointer-events:none}
 /* Vaihtoehto 2: suurennukset, vain tässä layoutissa. Jäähylaatikot kasvavat 25 % ankkuroituna reunoihin. */
 .layout-option2 .penalty-popup.home{transform:scale(1.25);transform-origin:left bottom}
 .layout-option2 .penalty-popup.away{transform:scale(1.25);transform-origin:right bottom}
+/* Vierasjäähyt oikean joukkueen logon yläpuolelle: oikea reuna seuraa logolaatikon oikeaa reunaa. Useampi jäähy kasvaa keskelle päin. */
+.layout-option2 .penalty-popup.away{margin-right:83px}
+@media(max-width:480px){.layout-option2 .penalty-popup.away{margin-right:79px}}
 .layout-option2 .clock-box .clock{font-size:20px}
 .layout-option2 .period-badge{font-size:11.25px;padding:2.5px 6.25px}
 @media(max-width:480px){
