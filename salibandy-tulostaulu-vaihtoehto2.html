@@ -44,13 +44,20 @@ body.gfx-hidden .gfx{opacity:0;pointer-events:none}
 .clock-box{min-width:0;display:flex;align-items:center;justify-content:center;gap:2px;background:#1b2a35;padding:2px 3px;flex-direction:column}
 .clock-box .clock{background:transparent;font-size:16px;line-height:1.0;padding:0}
 .period-badge{display:block;color:var(--ink);background:var(--accent);border-radius:2px;font-size:9px;font-weight:900;line-height:1.15;padding:2px 5px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
-.penalty-band{width:100%;min-height:26px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:7px;background:#101820;padding:3px 7px;border-top:1px solid rgba(232,197,71,.55);overflow:hidden}
-.penalty-group{display:flex;align-items:center;gap:4px;min-width:0;overflow:hidden;min-height:19px}
-.penalty-home,.penalty-away{white-space:nowrap}
-.penalty-chip{display:inline-flex;align-items:center;gap:5px;background:#1b2a35;border:1px solid var(--accent);color:var(--accent);border-radius:2px;padding:2px 5px;font-size:11px;line-height:1.15;font-weight:900;white-space:nowrap;flex:0 0 auto}
-.penalty-empty{color:#bdc7d0;font-size:9px;font-weight:700;letter-spacing:.02em;white-space:nowrap;opacity:.72}
-.layout-option2 .penalty-home{justify-content:flex-end;padding-right:3px}
-.layout-option2 .penalty-away{justify-content:flex-start;padding-left:3px}
+/* Vaihtoehto 2: jäähyt ovat kelluvia ilmoituslaatikoita tulostaulun yläpuolella.
+   Ne eivät lisää tulostaulun korkeutta eivätkä siirrä alla olevaa tapahtumalaatikkoa. */
+.scorebug{position:relative}
+.penalty-floater{position:absolute;left:0;right:0;bottom:calc(100% + 4px);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:end;gap:7px;z-index:20;pointer-events:none}
+.penalty-popup{display:none;align-items:center;gap:6px;min-width:0;max-width:100%;width:max-content;overflow:hidden;background:rgba(16,24,32,.97);border:1px solid var(--accent);border-radius:3px;padding:4px 7px;box-shadow:0 2px 6px rgba(0,0,0,.28)}
+.penalty-popup.active{display:flex}
+.penalty-popup.home{justify-self:start}
+.penalty-popup.away{justify-self:end}
+.penalty-team-label{font-size:9px;line-height:1;font-weight:900;color:var(--white);letter-spacing:.03em;flex:0 0 auto}
+.penalty-group{display:flex;align-items:center;gap:7px;min-width:0;overflow:hidden}
+.penalty-chip{display:inline-flex;align-items:center;gap:4px;background:transparent;color:var(--accent);border:0;padding:0;font-size:11px;line-height:1.15;font-weight:900;white-space:nowrap;flex:0 0 auto}
+.penalty-empty{display:none}
+.layout-option2 .penalty-home{justify-content:flex-start}
+.layout-option2 .penalty-away{justify-content:flex-end}
 .layout-option4 .penalty-home{justify-content:flex-start;padding-left:3px}
 .layout-option4 .penalty-away{justify-content:flex-end;padding-right:3px}
 .layout-option4 .clock-box{flex-direction:row;gap:4px}
@@ -64,9 +71,11 @@ body.gfx-hidden .gfx{opacity:0;pointer-events:none}
  .scorebug-main .score{font-size:19px}
  .clock-box .clock{font-size:13px}
  .period-badge{font-size:8px;padding:2px 3px}
- .penalty-band{padding:2px 4px;gap:2px;min-height:23px}
- .penalty-chip{font-size:9px;padding:2px 3px;gap:3px}
- .penalty-empty{font-size:8px}
+ .penalty-floater{gap:3px;bottom:calc(100% + 3px)}
+ .penalty-popup{gap:4px;padding:3px 4px;border-radius:2px}
+ .penalty-team-label{font-size:8px}
+ .penalty-group{gap:4px}
+ .penalty-chip{font-size:9px;gap:2px}
 }
 @media(max-width:480px){
  .layout-option4 .scorebug-main{grid-template-columns:minmax(0,1fr) 78px minmax(0,1fr) 98px}
@@ -80,7 +89,7 @@ body.gfx-hidden .gfx{opacity:0;pointer-events:none}
 <div class="team b"><div id="teamB" class="team-name">VIERAS</div><div id="logoB" class="fallback">B</div></div>
 <div class="clock-box"><div id="periodBadge" class="period-badge">1. ERÄ</div><div class="clock" id="clock">00:00</div></div>
 </div>
-<div class="penalty-band"><div class="penalty-group penalty-home" id="penaltiesHome"></div><div class="penalty-group penalty-away" id="penaltiesAway"></div></div>
+<div class="penalty-floater" id="penaltyFloater" aria-live="polite"><div class="penalty-popup home" id="penaltiesHome"><span class="penalty-team-label">KOTI</span><div class="penalty-group penalty-home" id="penaltyTimersHome"></div></div><div class="penalty-popup away" id="penaltiesAway"><span class="penalty-team-label">VIERAS</span><div class="penalty-group penalty-away" id="penaltyTimersAway"></div></div></div>
 </div><div id="events" class="events" aria-live="polite"></div></div><div id="error" class="err hidden"></div><pre id="debugPanel" class="debug-panel hidden"></pre>
 <script>
 const q=new URLSearchParams(location.search);
@@ -235,8 +244,11 @@ function renderPenaltyTimers(m){
  const fmt=n=>Math.floor(n/60)+':'+String(n%60).padStart(2,'0');
  const makeHTML=list=>list.slice(0,3).map(p=>'<span class="penalty-chip">'+(p.number!==''?'#'+esc(p.number)+' ':'')+esc(fmt(p.remaining))+'</span>').join('');
  const homeEl=$('penaltiesHome'),awayEl=$('penaltiesAway');
- if(homeEl)homeEl.innerHTML=home.length?makeHTML(home):'';
- if(awayEl)awayEl.innerHTML=away.length?makeHTML(away):'';
+ const homeTimers=$('penaltyTimersHome'),awayTimers=$('penaltyTimersAway');
+ if(homeTimers)homeTimers.innerHTML=home.length?makeHTML(home):'';
+ if(awayTimers)awayTimers.innerHTML=away.length?makeHTML(away):'';
+ if(homeEl)homeEl.classList.toggle('active',home.length>0);
+ if(awayEl)awayEl.classList.toggle('active',away.length>0);
 }
 function refreshPenaltyTimers(){
  if(penaltySourceMatch)renderPenaltyTimers(penaltySourceMatch);
