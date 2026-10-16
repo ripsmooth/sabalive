@@ -199,14 +199,52 @@ function currentPeriodClockSeconds(m){
  if(clockBaseSeconds!==null)return Math.max(0,Math.floor(clockBaseSeconds+(clockIsRunning?(Date.now()-clockReceivedAt)/1000:0)));
  return parseClockSeconds(m?.live_time_mmss||m?.live_time);
 }
+function periodLengthSeconds(m, periodIndex){
+ const lengths=m?.period_lengths_sec;
+ if(Array.isArray(lengths)&&lengths.length){
+  const raw=lengths[periodIndex-1];
+  const n=Number(raw);
+  if(Number.isFinite(n)&&n>0)return n;
+ }
+ if(lengths&&typeof lengths==='object'){
+  const raw=lengths[periodIndex]??lengths[String(periodIndex)]??lengths['p'+periodIndex]??lengths['p'+(periodIndex-1)];
+  const n=Number(raw);
+  if(Number.isFinite(n)&&n>0)return n;
+ }
+ const regularCount=Math.max(1,Number.parseInt(m?.period_count,10)||3);
+ const normalMin=Number(m?.period_min??m?.period_length_min??m?.period_minutes);
+ const overtimeMin=Number(m?.extra_period_min??m?.extra_period_length_min);
+ const mins=periodIndex>regularCount?(Number.isFinite(overtimeMin)&&overtimeMin>0?overtimeMin:(Number.isFinite(normalMin)&&normalMin>0?normalMin:20)):(Number.isFinite(normalMin)&&normalMin>0?normalMin:20);
+ return Math.round(mins*60);
+}
+function periodStartOffsetSeconds(m, periodIndex){
+ let offset=0;
+ for(let i=1;i<periodIndex;i++)offset+=periodLengthSeconds(m,i);
+ return offset;
+}
+function currentMatchElapsedSeconds(m){
+ const source=latestLiveScore||m;
+ const periodRaw=source?.live_period??source?.period??source?.period_no??source?.period_number??1;
+ const periodIndex=Math.max(1,Number.parseInt(periodRaw,10)||1);
+ const localClock=currentPeriodClockSeconds(source);
+ if(localClock===null)return null;
+ return periodStartOffsetSeconds(m||source,periodIndex)+localClock;
+}
+function penaltyStartMatchSeconds(startSeconds,p,m){
+ const periodRaw=p?.period??p?.period_no??p?.period_number??p?.live_period??latestLiveScore?.live_period??m?.live_period??1;
+ const periodIndex=Math.max(1,Number.parseInt(periodRaw,10)||1);
+ const currentLocalPeriodLength=periodLengthSeconds(m,periodIndex);
+ // TorneoPal's event time can be cumulative (e.g. 25:02 in period 2) or local
+ // to the period (e.g. 05:02 in period 2). For later periods, values at or beyond
+ // the duration of one period are treated as cumulative; shorter values as local.
+ if(periodIndex>1&&startSeconds>=currentLocalPeriodLength)return startSeconds;
+ return periodStartOffsetSeconds(m,periodIndex)+startSeconds;
+}
 function penaltyRemainingSeconds(p, m){
  const directKeys=['remaining_seconds','seconds_remaining','time_remaining_seconds','penalty_seconds_remaining','live_remaining_seconds'];
  for(const key of directKeys){const n=Number(p?.[key]);if(p?.[key]!==undefined&&p?.[key]!==null&&p[key]!==''&&Number.isFinite(n))return Math.max(0,Math.floor(n))}
  const directTextKeys=['remaining_time','time_remaining','time_left','penalty_time_left','remaining_penalty_time'];
  for(const key of directTextKeys){const sec=parsePenaltyTime(p?.[key]);if(sec!==null)return sec}
- const periodPenalty=p?.period??p?.period_no??p?.period_number??p?.live_period;
- const periodNow=(latestLiveScore?.live_period??m?.live_period??m?.period??'');
- if(periodPenalty!==undefined&&periodPenalty!==null&&periodPenalty!==''&&periodNow!==undefined&&periodNow!==null&&periodNow!==''&&String(periodPenalty)!==String(periodNow))return null;
  const durationRaw=p?.duration_seconds??p?.penalty_duration_seconds;
  let duration=Number(durationRaw);
  if(!Number.isFinite(duration)||duration<=0){
@@ -219,9 +257,11 @@ function penaltyRemainingSeconds(p, m){
   if(mins)duration=Number(mins[1])*60;
  }
  if(!Number.isFinite(duration)||duration<=0)return null;
- const start=parsePenaltyTime(p?.time??p?.event_time??p?.match_time??p?.clock);
- const now=currentPeriodClockSeconds(latestLiveScore||m);
- if(start===null||now===null||now<start)return null;
+ const rawStart=parsePenaltyTime(p?.time??p?.event_time??p?.match_time??p?.clock);
+ const now=currentMatchElapsedSeconds(m);
+ if(rawStart===null||now===null)return null;
+ const start=penaltyStartMatchSeconds(rawStart,p,m);
+ if(now<start)return null;
  const elapsed=now-start;
  if(elapsed>=duration)return null;
  return Math.max(0,Math.floor(duration-elapsed));
