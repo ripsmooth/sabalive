@@ -131,10 +131,14 @@ function periodLabel(m){
  const n=Number(rawText);
  if(!Number.isInteger(n)||n<1)return ''; // -1/empty means no active period reported by the API.
  const regularCount=Number.parseInt(m.period_count,10)||3;
- const extraCount=Math.max(0,Number.parseInt(m.extra_period_count,10)||0);
+ const rawExtraCount=Number.parseInt(m.extra_period_count,10);
+ const extraCount=Number.isFinite(rawExtraCount)&&rawExtraCount>=0?rawExtraCount:0;
  if(n<=regularCount)return n+'. ERÄ';
+ // In a standard three-period match, period 4 is overtime even when the API
+ // omits extra_period_count or reports it as zero. Check this before RL logic.
+ if(n===regularCount+1)return 'JA';
  if(n<=regularCount+extraCount)return 'JA';
- // In a 3-period match, the period after any configured extra time is the shootout.
+ // RL is shown only for a later numeric period or an explicit textual RL value.
  if(n>regularCount+extraCount)return 'RL';
  return '';
 }
