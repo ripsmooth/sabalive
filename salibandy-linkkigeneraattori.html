@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Salibandy-grafiikoiden linkkigeneraattori</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1220;--panel:#131f31;--panel2:#18283d;--line:#2c405a;--text:#edf4fb;--muted:#a9bbce;--yellow:#ffe34d;--green:#55d69e;--blue:#6bb7ff}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(140deg,#0b1220,#111d30 60%,#0a1422);color:var(--text);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+main{max-width:1000px;margin:0 auto;padding:24px 16px 48px}.top{border-bottom:3px solid var(--yellow);padding:8px 0 18px;margin-bottom:22px}
+.kicker{color:var(--green);font-size:.78rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+h1{font-size:clamp(1.6rem,4vw,2.35rem);line-height:1.12;margin:8px 0 10px}p{color:var(--muted);margin:.35rem 0}
+.panel{background:rgba(19,31,49,.96);border:1px solid var(--line);border-radius:14px;padding:18px;margin:16px 0}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+label{display:block;font-weight:750;font-size:.9rem;margin-bottom:7px}
+input{width:100%;min-width:0;background:#081321;border:1px solid #3a526e;border-radius:8px;color:var(--text);font:inherit;padding:12px}
+input:focus{outline:2px solid var(--yellow);outline-offset:1px}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+button{border:0;border-radius:8px;padding:11px 15px;font:inherit;font-weight:800;cursor:pointer;background:var(--yellow);color:#151b23}
+button.secondary{background:#263b53;color:var(--text);border:1px solid #49617c}
+button:focus-visible{outline:3px solid white;outline-offset:2px}
+.note{font-size:.88rem;margin-top:9px}
+.status{min-height:1.4em;color:var(--green);font-size:.9rem;margin-top:10px}
+.results-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+h2{font-size:1.15rem;margin:0 0 10px}.count{color:var(--muted);font-size:.9rem}
+.link-list{display:grid;gap:10px;margin-top:14px}
+.item{border:1px solid var(--line);background:var(--panel2);border-radius:10px;padding:12px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center}
+.item strong{display:block;margin-bottom:4px}.url{display:block;color:#b9d8f8;overflow-wrap:anywhere;font-size:.87rem;text-decoration:none}.url:hover{text-decoration:underline}
+.smallbtn{padding:8px 10px;font-size:.85rem;white-space:nowrap}
+footer{font-size:.82rem;color:var(--muted);margin-top:22px}
+@media(max-width:620px){.grid{grid-template-columns:1fr}.item{grid-template-columns:1fr}.smallbtn{width:100%}main{padding-top:16px}.panel{padding:14px}}
+</style>
+</head>
+<body>
+<main>
+  <header class="top">
+    <div class="kicker">SALIBANDY-TV · GITHUB PAGES</div>
+    <h1>Grafiikoiden linkkigeneraattori</h1>
+    <p>Anna ottelun ID, niin saat valmiit osoitteet kaikkiin ottelukohtaisiin grafiikoihin. Kopioi linkit OBS:n selainlähteisiin.</p>
+  </header>
+
+  <section class="panel">
+    <div class="grid">
+      <div>
+        <label for="matchId">Ottelun ID</label>
+        <input id="matchId" inputmode="numeric" autocomplete="off" placeholder="Esim. 953141">
+      </div>
+      <div>
+        <label for="baseUrl">Grafiikoiden perusosoite</label>
+        <input id="baseUrl" inputmode="url" autocomplete="url" placeholder="https://käyttäjä.github.io/projekti/">
+      </div>
+    </div>
+    <p class="note">Perusosoite täytetään automaattisesti, kun avaat tämän työkalun julkaistusta GitHub Pages -kansiosta. Voit muuttaa osoitetta tarvittaessa.</p>
+    <div class="actions">
+      <button id="generate">Luo linkit</button>
+      <button id="copyAll" class="secondary">Kopioi kaikki linkit</button>
+    </div>
+    <div id="status" class="status" role="status" aria-live="polite"></div>
+  </section>
+
+  <section class="panel">
+    <div class="results-head">
+      <h2>Valmiit grafiikkalinkit</h2>
+      <span class="count" id="count">0 linkkiä</span>
+    </div>
+    <div id="results" class="link-list">
+      <p>Syötä ottelun ID ja paina “Luo linkit”.</p>
+    </div>
+  </section>
+  <footer>Työkalu muodostaa linkit paikallisesti selaimessa. Se ei muuta GitHubin tiedostoja eikä tarvitse API-avainta.</footer>
+</main>
+<script>
+(() => {
+  const graphics = [
+    ["Tulostaulu", "salibandy-tulostaulu.html"],
+    ["Tehopelaajat", "salibandy-tehopelaajat.html"],
+    ["Sarjataulukko", "salibandy-sarjataulukko.html"],
+    ["Erätauko", "salibandy-eratauko.html"],
+    ["Ottelutilastot", "salibandy-tilastot.html"],
+    ["Lower third", "salibandy-lowerthird.html"],
+    ["Kentälliset", "salibandy-kentalliset.html"],
+    ["Ottelun tapahtumat", "salibandy-otteluntapahtumat.html"],
+    ["Kokoonpanot", "salibandy-kokoonpanot.html"],
+    ["Kuntopuntari", "salibandy-kuntopuntari.html"]
+  ];
+
+  const matchInput = document.getElementById("matchId");
+  const baseInput = document.getElementById("baseUrl");
+  const results = document.getElementById("results");
+  const status = document.getElementById("status");
+  const count = document.getElementById("count");
+  let currentLinks = [];
+
+  function defaultBase() {
+    const url = new URL(".", window.location.href);
+    url.search = "";
+    url.hash = "";
+    return url.href;
+  }
+  baseInput.value = defaultBase();
+
+  function buildLinks() {
+    const id = matchInput.value.trim();
+    if (!id) {
+      status.textContent = "Anna ensin ottelun ID.";
+      matchInput.focus();
+      return;
+    }
+    if (!/^[A-Za-z0-9_-]+$/.test(id)) {
+      status.textContent = "Ottelun ID sisältää odottamattomia merkkejä. Tarkista tunniste.";
+      matchInput.focus();
+      return;
+    }
+
+    let base;
+    try {
+      base = new URL(baseInput.value.trim() || defaultBase());
+      if (!/^https?:$/.test(base.protocol)) throw new Error("protocol");
+      if (!base.pathname.endsWith("/")) base.pathname += "/";
+      base.search = "";
+      base.hash = "";
+    } catch (_) {
+      status.textContent = "Tarkista perusosoite. Käytä kelvollista https://- tai http://-osoitetta.";
+      return;
+    }
+
+    currentLinks = graphics.map(([name, file]) => {
+      const url = new URL(file, base);
+      url.searchParams.set("match_id", id);
+      return {name, url: url.href};
+    });
+
+    results.replaceChildren();
+    currentLinks.forEach((item) => {
+      const row = document.createElement("div");
+      row.className = "item";
+      const info = document.createElement("div");
+      const title = document.createElement("strong");
+      title.textContent = item.name;
+      const link = document.createElement("a");
+      link.className = "url";
+      link.href = item.url;
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.textContent = item.url;
+      info.append(title, link);
+      const button = document.createElement("button");
+      button.className = "secondary smallbtn";
+      button.textContent = "Kopioi linkki";
+      button.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(item.url);
+          status.textContent = item.name + ": linkki kopioitu.";
+        } catch (_) {
+          status.textContent = "Automaattinen kopiointi ei onnistunut. Avaa linkki ja kopioi osoite selaimen osoiteriviltä.";
+        }
+      });
+      row.append(info, button);
+      results.append(row);
+    });
+    count.textContent = currentLinks.length + " linkkiä";
+    status.textContent = "Valmis: " + currentLinks.length + " grafiikkalinkkiä luotu.";
+  }
+
+  document.getElementById("generate").addEventListener("click", buildLinks);
+  document.getElementById("copyAll").addEventListener("click", async () => {
+    if (!currentLinks.length) buildLinks();
+    if (!currentLinks.length) return;
+    const text = currentLinks.map(x => x.name + "\n" + x.url).join("\n\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      status.textContent = "Kaikki " + currentLinks.length + " linkkiä kopioitu.";
+    } catch (_) {
+      status.textContent = "Kopiointi ei onnistunut. Kopioi linkit yksitellen painikkeilla.";
+    }
+  });
+  matchInput.addEventListener("keydown", e => { if (e.key === "Enter") buildLinks(); });
+})();
+</script>
+</body>
+</html>

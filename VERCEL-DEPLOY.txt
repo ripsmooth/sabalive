@@ -1,0 +1,14 @@
+VERCEL API - KÄYTTÖÖNOTTO
+
+1. Yhdistä tämä sama GitHub-repositorio Verceliin uutena projektina.
+2. Root Directory = repositorion juuri.
+3. Lisää Environment Variables:
+   TORNEOPAL_HASH_SEED = TorneoPalin hash-salaisuus
+   TORNEOPAL_ACCEPT = TorneoPalin Accept-arvo
+4. Deploy.
+5. Kopioi Vercelin projektin URL.
+6. Avaa github-pages-api.js ja vaihda API_BASE Vercelin URL-osoitteeksi.
+7. Commit/push, jolloin GitHub Pages päivittyy.
+
+Testiosoite:
+https://OMA-PROJEKTI.vercel.app/api/torneopal?method=getMatch&match_id=953141

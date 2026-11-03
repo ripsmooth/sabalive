@@ -1,4 +1,5 @@
-<!doctype html><html lang="fi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Salibandy · Tulostaulu – vaihtoehto 2</title><style>
+<!doctype html><html lang="fi"><head>
+<script src="github-pages-api.js"></script><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Salibandy · Tulostaulu – vaihtoehto 2</title><style>
 
 :root{--ink:#101820;--panel:#1b2a35;--accent:#e8c547;--white:#fff;--muted:#bdc7d0;--scale:1;--gfx-width:1400px}
 *{box-sizing:border-box}
@@ -131,14 +132,12 @@ function periodLabel(m){
  const n=Number(rawText);
  if(!Number.isInteger(n)||n<1)return ''; // -1/empty means no active period reported by the API.
  const regularCount=Number.parseInt(m.period_count,10)||3;
- const rawExtraCount=Number.parseInt(m.extra_period_count,10);
- const extraCount=Number.isFinite(rawExtraCount)&&rawExtraCount>=0?rawExtraCount:0;
+ const extraCount=Math.max(0,Number.parseInt(m.extra_period_count,10)||0);
  if(n<=regularCount)return n+'. ERÄ';
- // In a standard three-period match, period 4 is overtime even when the API
- // omits extra_period_count or reports it as zero. Check this before RL logic.
- if(n===regularCount+1)return 'JA';
  if(n<=regularCount+extraCount)return 'JA';
- // RL is shown only for a later numeric period or an explicit textual RL value.
+ // Jos API ei ilmoita extra_period_count-arvoa, ensimmäinen varsinainen jatkoaikajakso on silti JA.
+ if(n===regularCount+1)return 'JA';
+ // Myöhempi numeerinen jakso tulkitaan rangaistuslaukauskilpailuksi; tekstimuotoinen RL käsitellään yllä.
  if(n>regularCount+extraCount)return 'RL';
  return '';
 }
