@@ -1,4 +1,4 @@
-const crypto = require("crypto");
+import crypto from "node:crypto";
 
 const TORNEOPAL_BASE = "https://salibandy-api.torneopal.net/taso/rest/";
 const ALLOWED_METHODS = new Set([
@@ -13,7 +13,7 @@ function send(res, status, data) {
   return res.status(status).json(data);
 }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
