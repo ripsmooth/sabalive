@@ -5,7 +5,7 @@
   const nativeFetch = window.fetch.bind(window);
   // Vaihda tämä Vercelin projektin osoitteeksi käyttöönoton jälkeen.
   // Esimerkki: https://sabalive-api.vercel.app
-  const API_BASE = 'https://YOUR-VERCEL-PROJECT.vercel.app';
+  const API_BASE = 'https://sabalive-two.vercel.app';
   const DEFAULTS = {scorebug:true,lowerthird:false,breaktime:false,stats:false,lineups:false,lines:false,events:false,scorers:false,form:false,updatedAt:null};
   const getStore = (k, fallback) => { try { const v=localStorage.getItem(k); return v===null?fallback:JSON.parse(v); } catch { return fallback; } };
   const setStore = (k,v) => { try { localStorage.setItem(k,JSON.stringify(v)); } catch {} };
