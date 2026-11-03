@@ -1,4 +1,4 @@
-const crypto = require("crypto");
+import crypto from "node:crypto";
 
 const TORNEOPAL_BASE = "https://salibandy-api.torneopal.net/taso/rest/";
 const ALLOWED_METHODS = new Set([
@@ -13,7 +13,7 @@ function send(res, status, data) {
   return res.status(status).json(data);
 }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -48,9 +48,11 @@ module.exports = async function handler(req, res) {
     hashParams.push([key, stringValue]);
   }
 
-  // Match the known working TorneoPal SHA-256 format used by the basketball
-  // integration: hash only the explicitly supplied query parameters, in their
-  // original insertion order. Do not add timeStamp to the hash input (or URL).
+  const timeStamp = String(Date.now());
+  target.searchParams.set("timeStamp", timeStamp);
+  hashParams.push(["timeStamp", timeStamp]);
+
+  // Same TorneoPal SHA-256 input format used by the Salibandy-TV client helper.
   let hashInput = method + "?" + hashSeed;
   for (const [key, value] of hashParams) hashInput += "&" + key + "=" + value;
   const hash = crypto.createHash("sha256").update(hashInput, "utf8").digest("hex");
@@ -75,8 +77,7 @@ module.exports = async function handler(req, res) {
     } catch {
       return send(res, 502, {
         error: "TorneoPal ei palauttanut kelvollista JSON-dataa.",
-        upstreamStatus: upstream.status,
-        upstreamBody: body.slice(0, 500).replace(/\s+/g, " ")
+        upstreamStatus: upstream.status
       });
     }
 
