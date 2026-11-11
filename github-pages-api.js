@@ -1,28 +1,49 @@
 /* GitHub Pages compatibility layer for Salibandy-TV.
-   Live TorneoPal requests are routed through the Vercel serverless proxy. */
+   Uses browser-local settings and direct TorneoPal requests (requires TorneoPal CORS support). */
 (() => {
   'use strict';
   const nativeFetch = window.fetch.bind(window);
-  // Vaihda tämä Vercelin projektin osoitteeksi käyttöönoton jälkeen.
-  // Esimerkki: https://sabalive-api.vercel.app
-  const API_BASE = 'https://sabalive-two.vercel.app';
+  const API = 'https://salibandy-api.torneopal.net/taso/rest/';
+  const ACCEPT = 'json/zsn3anknxzcfzc23k53jqdcd4pymutsf';
+  const HASH_SEED = 'ysnyp4h6e9egetkc3s3v';
+  async function sha256Hex(value) {
+    if (!globalThis.crypto?.subtle) throw new Error('SHA-256 ei ole käytettävissä. Avaa sivu HTTPS-yhteydellä.');
+    const bytes = new TextEncoder().encode(value);
+    const digest = await crypto.subtle.digest('SHA-256', bytes);
+    return Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, '0')).join('');
+  }
   const DEFAULTS = {scorebug:true,lowerthird:false,breaktime:false,stats:false,lineups:false,lines:false,events:false,scorers:false,form:false,updatedAt:null};
   const getStore = (k, fallback) => { try { const v=localStorage.getItem(k); return v===null?fallback:JSON.parse(v); } catch { return fallback; } };
   const setStore = (k,v) => { try { localStorage.setItem(k,JSON.stringify(v)); } catch {} };
   function response(data, status=200) { return new Response(JSON.stringify(data), {status, headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'}}); }
   async function call(endpoint, params={}) {
-    const u=new URL('/api/torneopal',API_BASE);
-    u.searchParams.set('method',endpoint);
+    const u=new URL(endpoint,API);
+    const hashParams = [];
     Object.entries(params).forEach(([k,v])=>{
-      if(v!==undefined&&v!==null&&v!=='')u.searchParams.set(k,String(v));
+      if(v!==undefined&&v!==null&&v!==''){
+        const value=String(v);
+        u.searchParams.set(k,value);
+        hashParams.push([k,value]);
+      }
     });
+    const timeStamp=String(Date.now());
+    u.searchParams.set('timeStamp',timeStamp);
+    hashParams.push(['timeStamp',timeStamp]);
+
+    // TorneoPal SHA-256: method?seed&param=value... (parameter insertion order).
+    // The hash is calculated before adding the hash parameter itself.
+    let hashInput=endpoint+'?'+HASH_SEED;
+    for(const [key,value] of hashParams) hashInput+='&'+key+'='+value;
+    const hash=await sha256Hex(hashInput);
+    u.searchParams.set('hash',hash);
+
     let r;
-    try { r=await nativeFetch(u.toString(),{cache:'no-store'}); }
-    catch(e) { throw new Error('Yhteys Vercelin TorneoPal-välityspalvelimeen epäonnistui. Tarkista API_BASE-osoite ja Vercelin käyttöönotto. '+(e?.message||'')); }
+    try { r=await nativeFetch(u.toString(),{headers:{Accept:ACCEPT},cache:'no-store'}); }
+    catch(e) { throw new Error('TorneoPal-haku estyi selaimen CORS-rajoitukseen tai verkkovirheeseen. GitHub Pages ei voi ohittaa tätä. '+(e?.message||'')); }
     const body=await r.text();
-    let d; try{d=JSON.parse(body)}catch{throw new Error('Vercel-välityspalvelin ei palauttanut kelvollista JSON-dataa ('+r.status+').');}
-    if(!r.ok)throw new Error(d?.error||('TorneoPal-välityspalvelin vastasi '+r.status));
-    if(d.call?.status&&!['ok','OK'].includes(d.call.status))throw new Error('TorneoPal: '+d.call.status);
+    if(!r.ok||body.trimStart().startsWith('<')) throw new Error('TorneoPal-pyyntö epäonnistui ('+r.status+').');
+    let d; try{d=JSON.parse(body)}catch{throw new Error('TorneoPal ei palauttanut kelvollista JSON-dataa.');}
+    if(d.call?.status&&!['ok','OK'].includes(d.call.status)) throw new Error('TorneoPal: '+d.call.status);
     return d;
   }
   const num=v=>{if(v===null||v===undefined||String(v).trim()==='')return null;const n=Number(v);return Number.isFinite(n)?n:null;};
