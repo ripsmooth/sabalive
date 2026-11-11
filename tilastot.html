@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TorneoPal • Tilastot</title>
+<style>
+:root{--ink:#101820;--panel:#17232e;--accent:#e8c547;--white:#fff;--muted:#bdc7d0;--scale:1;--stat-width:1200px}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;background:transparent;overflow:hidden}
+body{font-family:Arial,Helvetica,sans-serif;color:var(--white);font-variant-numeric:tabular-nums} .stage{opacity:1;transition:opacity .45s ease-in-out;will-change:opacity}body.stats-hidden .stage{opacity:0;pointer-events:none}
+.stage{position:absolute;left:50%;bottom:50px;width:var(--stat-width);max-width:calc(100vw - 16px);transform:translateX(-50%) scale(var(--scale));transform-origin:bottom center;padding:8px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.32))}
+.header{height:150px;background:var(--accent);display:grid;grid-template-columns:minmax(0,1fr) 280px minmax(0,1fr);align-items:stretch}
+.team{min-width:0;background:rgba(16,24,32,.97);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:12px 24px}
+.team.home{clip-path:polygon(0 0,100% 0,calc(100% - 18px) 100%,0 100%)}
+.team.away{clip-path:polygon(18px 0,100% 0,100% 100%,0 100%)}
+.logo{width:74px;height:74px;object-fit:contain;display:block}
+.fallback{width:74px;height:74px;border:2px solid rgba(255,255,255,.5);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--accent);font-size:24px;font-weight:900}
+.teamname{font-size:clamp(17px,1.7vw,28px);line-height:1.05;font-weight:900;text-transform:uppercase;text-align:center;overflow-wrap:anywhere;max-height:2.1em;overflow:hidden}
+.heading{background:var(--accent);color:var(--ink);display:flex;align-items:center;justify-content:center;font-size:32px;letter-spacing:.08em;font-weight:900;text-transform:uppercase;text-align:center;padding:12px}
+.rows{background:rgba(16,24,32,.97);border-top:4px solid var(--accent);padding:12px 0}
+.stat-row{display:grid;grid-template-columns:minmax(0,1fr) 360px minmax(0,1fr);align-items:center;min-height:64px;border-bottom:1px solid rgba(255,255,255,.14)}
+.stat-row:last-child{border-bottom:0}
+.value{font-size:34px;font-weight:900;color:var(--white);padding:5px 34px;white-space:nowrap}
+.value.home{text-align:left}
+.value.away{text-align:right}
+.label{background:var(--panel);border-left:2px solid var(--accent);border-right:2px solid var(--accent);align-self:stretch;display:flex;align-items:center;justify-content:center;text-align:center;padding:8px 12px;font-size:18px;font-weight:900;line-height:1.12;text-transform:uppercase;letter-spacing:.025em}
+.err{position:absolute;left:8px;top:8px;max-width:700px;background:rgba(16,24,32,.97);border-left:5px solid var(--accent);padding:13px 16px;font-size:16px}
+.hidden{display:none!important}
+@media(max-width:800px){
+ .stage{width:calc(100vw - 16px);max-width:calc(100vw - 16px)}
+ .header{height:112px;grid-template-columns:minmax(0,1fr) 150px minmax(0,1fr)}
+ .team{padding:8px;gap:5px}.logo,.fallback{width:48px;height:48px;flex-basis:48px}.fallback{font-size:17px}
+ .teamname{font-size:clamp(12px,2.3vw,18px)}
+ .heading{font-size:22px;padding:8px}
+ .stat-row{grid-template-columns:minmax(0,1fr) 190px minmax(0,1fr);min-height:48px}
+ .value{font-size:23px;padding:4px 12px}.label{font-size:12px;padding:6px 7px}
+}
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+ <div class="header">
+  <div class="team home"><div id="homeLogo" class="fallback">K</div><div class="teamname" id="homeName">KOTIJOUKKUE</div></div>
+  <div class="heading">Tilastot</div>
+  <div class="team away"><div id="awayLogo" class="fallback">V</div><div class="teamname" id="awayName">VIERASJOUKKUE</div></div>
+ </div>
+ <div class="rows">
+  <div class="stat-row"><div class="value home" id="homeShots">0</div><div class="label">Laukaukset</div><div class="value away" id="awayShots">0</div></div>
+  <div class="stat-row"><div class="value home" id="homeOnTarget">0</div><div class="label">Laukaukset kohti maalia</div><div class="value away" id="awayOnTarget">0</div></div>
+  <div class="stat-row"><div class="value home" id="homeCorners">0 (0)</div><div class="label">Kulmalyönnit (maalit)</div><div class="value away" id="awayCorners">0 (0)</div></div>
+  <div class="stat-row"><div class="value home" id="homePenalties">0</div><div class="label">Rangaistusminuutit</div><div class="value away" id="awayPenalties">0</div></div>
+  <div class="stat-row hidden" id="ejectionsRow"><div class="value home" id="homeEjections">0</div><div class="label">Ulosajot</div><div class="value away" id="awayEjections">0</div></div>
+ </div>
+</div>
+<div class="err" id="err">TorneoPal: haetaan ottelutietoja…</div>
+<script>
+(()=>{
+ const q=new URLSearchParams(location.search);
+ const localDate=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Helsinki',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+ let date=q.get('pvm')||localDate,tournament=q.get('turnaus')||'sjpl_2627',matchId=q.get('ottelu')||q.get('match')||'';const explicitMatch=!!matchId;
+ const refresh=Math.max(3,Math.min(60,Number(q.get('refresh')||5)));
+ const width=Math.max(900,Math.min(1920,parseInt(q.get('width')||'1200',10)||1200));
+ const scale=Math.max(.5,Math.min(2.5,Number(q.get('scale')||1)));
+ document.documentElement.style.setProperty('--stat-width',width+'px');
+ document.documentElement.style.setProperty('--scale',scale);
+ const $=id=>document.getElementById(id);
+ const val=(n,t)=>(n.getElementsByTagName(t)[0]?.textContent||'').trim();
+ const attr=(n,k)=>(n.getAttribute(k)||'').trim();
+ function set(id,v){$(id).textContent=String(v)}
+ function setLogo(id,url,name){const el=$(id);el.innerHTML='';if(url&&/^https?:\/\//i.test(url)){const im=document.createElement('img');im.className='logo';im.alt='';im.src=url;im.onerror=()=>{el.className='fallback';el.textContent=(name||'?').slice(0,2).toUpperCase()};el.className='';el.appendChild(im)}else{el.className='fallback';el.textContent=(name||'?').slice(0,2).toUpperCase()}}
+ function sideOf(e){const s=attr(e,'kvjoukkue').toLowerCase();return s==='koti'?'home':s==='vieras'?'away':''}
+ function render(xml){
+  const d=new DOMParser().parseFromString(xml,'application/xml');
+  if(d.querySelector('parsererror'))throw Error('XML-dataa ei voitu lukea.');
+  const matches=[...d.getElementsByTagName('ottelu')];
+  if(!matches.length)throw Error('Otteluita ei löytynyt valitulta päivältä.');
+  let m=matchId?matches.find(x=>val(x,'otteluid')===matchId):null;
+  if(matchId&&!m)throw Error('Ottelua '+matchId+' ei löytynyt.');
+  if(!m)m=matches.find(x=>{const s=val(x,'livestatus').toLowerCase();return s&&!['over','played','finished','ended'].includes(s)})||matches[0];
+  const hn=val(m,'kotinimi')||'KOTI',an=val(m,'vierasnimi')||'VIERAS';
+  set('homeName',hn);set('awayName',an);setLogo('homeLogo',val(m,'kotilogo'),hn);setLogo('awayLogo',val(m,'vieraslogo'),an);
+  const stats={home:{shots:0,onTarget:0,corners:0,cornerGoals:0,penalties:0,ejections:0},away:{shots:0,onTarget:0,corners:0,cornerGoals:0,penalties:0,ejections:0}};
+  const events=[...m.getElementsByTagName('tapahtuma')];
+  const eventSeconds=e=>{const raw=attr(e,'kulunutaika')||attr(e,'peliaika')||attr(e,'aika');if(!raw)return NaN;const parts=raw.split(':').map(Number);if(parts.some(x=>!Number.isFinite(x)))return NaN;return parts.length===3?parts[0]*3600+parts[1]*60+parts[2]:parts.length===2?parts[0]*60+parts[1]:Number(raw)};
+  const cornerEvents=events.filter(e=>attr(e,'tapahtuma').toLowerCase()==='kulma');
+  const isCornerGoal=e=>{if(attr(e,'tapahtuma').toLowerCase()!=='maali')return false;const raw=(attr(e,'selite')||attr(e,'kuvaus')||e.getElementsByTagName('selite')[0]?.textContent||e.getElementsByTagName('kuvaus')[0]?.textContent||'').trim().toLocaleLowerCase('fi-FI').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[().,]/g,'').trim();return /^(kl|kulma|kulmalyonti|kulmalyonnista|kulmalyonnin)$/.test(raw)};
+  for(const e of events){
+   const side=sideOf(e);if(!side)continue;
+   const type=attr(e,'tapahtuma').toLowerCase();
+   if(['laukaus','laukausohi','ohi'].includes(type))stats[side].shots++;
+   if(type==='laukaus')stats[side].onTarget++;
+   if(type==='kulma')stats[side].corners++;
+   if(isCornerGoal(e)){
+    stats[side].cornerGoals++;
+    const sec=eventSeconds(e),duplicate=Number.isFinite(sec)&&cornerEvents.some(c=>sideOf(c)===side&&eventSeconds(c)===sec);
+    if(!duplicate)stats[side].corners++;
+   }
+   if(type==='6min')stats[side].penalties+=6;
+   if(type==='10min')stats[side].penalties+=10;
+   if(type==='ulosajo')stats[side].ejections++;
+  }
+  for(const side of ['home','away']){
+   set(side+'Shots',stats[side].shots);
+   set(side+'OnTarget',stats[side].onTarget);
+   set(side+'Corners',stats[side].corners+' ('+stats[side].cornerGoals+')');
+   set(side+'Penalties',stats[side].penalties+' min');
+   set(side+'Ejections',stats[side].ejections);
+  }
+  $('ejectionsRow').classList.toggle('hidden', stats.home.ejections+stats.away.ejections===0);
+  $('err').classList.add('hidden');
+ }
+ async function update(){try{const url=new URL('/api/live',location.origin);url.searchParams.set('pvm',date);url.searchParams.set('turnaus',tournament);const r=await fetch(q.get('api')||url.toString(),{cache:'no-store'});if(!r.ok)throw Error('palvelin vastasi '+r.status);render(await r.text())}catch(e){$('err').textContent='TorneoPal: '+e.message;$('err').classList.remove('hidden')}}
+ async function updateVisibility(){try{const r=await fetch('/api/graphics-state',{cache:'no-store'});if(!r.ok)throw Error('visibility');const d=await r.json();document.body.classList.toggle('stats-hidden',d.stats!==true)}catch(e){/* Keep current visibility if the control service is unavailable. */}}
+ updateVisibility();setInterval(updateVisibility,2000);
+ async function startWithDefault(){if(!explicitMatch){try{const r=await fetch('/api/default-match',{cache:'no-store'});if(r.ok){const d=await r.json();if(d.ottelu){matchId=String(d.ottelu);if(!q.has('pvm')&&d.pvm)date=d.pvm;if(!q.has('turnaus')&&d.turnaus)tournament=d.turnaus}}}catch(e){}}update();setInterval(update,refresh*1000)}startWithDefault();
+})();
+</script>
+<script>
+(function(){
+ const params=new URLSearchParams(location.search); if(params.get('debug')!=='1') return;
+ const targetSelector='#stage';
+ const panel=document.createElement('div');
+ panel.id='bandylive-debug-panel';
+ panel.style.cssText='position:fixed;z-index:2147483647;left:8px;top:8px;max-width:min(460px,calc(100vw - 16px));max-height:45vh;overflow:auto;padding:10px 12px;background:rgba(5,10,15,.94);color:#fff;border:1px solid #e8c547;border-radius:6px;font:12px/1.45 Arial,sans-serif;box-shadow:0 4px 20px #0008;white-space:normal;pointer-events:auto';
+ panel.innerHTML='<div style="display:flex;justify-content:space-between;gap:18px;align-items:center;margin-bottom:6px"><b style="color:#e8c547">BANDYLIVE DEBUG · KOKOTIEDOT</b><button id="bd-close" style="background:#e8c547;color:#101820;border:0;padding:3px 7px;font-weight:bold;cursor:pointer">Sulje</button></div><div id="bd-values"></div>';
+ document.body.appendChild(panel); panel.querySelector('#bd-close').onclick=()=>panel.remove();
+ const fmt=n=>Number.isFinite(n)?Math.round(n*100)/100:'—';
+ function update(){if(!document.body.contains(panel))return;const el=document.querySelector(targetSelector);let rect=el?el.getBoundingClientRect():null;const cs=el?getComputedStyle(el):null;
+ const rows=[['Grafiikkaelementti',targetSelector],['Elementti löytyi',el?'kyllä':'ei'],['Elementin koko',rect?fmt(rect.width)+' × '+fmt(rect.height)+' px':'—'],['Elementin sijainti',rect?'x '+fmt(rect.left)+' / y '+fmt(rect.top):'—'],['CSS width / height',cs?cs.width+' / '+cs.height:'—'],['Transform',cs?cs.transform:'—'],['Ikkuna',innerWidth+' × '+innerHeight+' px'],['Dokumentti',document.documentElement.scrollWidth+' × '+document.documentElement.scrollHeight+' px'],['Näyttökerroin',devicePixelRatio],['URL-parametrit',location.search||'(ei parametreja)']];
+ panel.querySelector('#bd-values').innerHTML=rows.map(([k,v])=>'<div style="display:flex;justify-content:space-between;gap:12px;border-top:1px solid #ffffff20;padding:3px 0"><span style="color:#bdc7d0">'+k+'</span><b style="text-align:right;overflow-wrap:anywhere">'+String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</b></div>').join('');
+ }
+ update();window.addEventListener('resize',update);window.addEventListener('load',update);setInterval(update,1000);
+})();
+</script>
+</body>
+</html>

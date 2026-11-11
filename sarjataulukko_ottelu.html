@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="fi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Jääpallo · Ottelukohtainen sarjataulukko</title>
+<style>
+:root{--ink:#101820;--panel:#17232e;--panel2:#1b2a35;--accent:#e8c547;--white:#fff;--muted:#bdc7d0;--width:1120px;--scale:1}*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:transparent;overflow:hidden}body{font-family:Arial,Helvetica,sans-serif;color:var(--white);font-variant-numeric:tabular-nums}.wrap{position:absolute;left:50%;top:50%;width:var(--width);max-width:calc(100vw - 20px);transform:translate(-50%,-50%) scale(var(--scale));transform-origin:center center;filter:drop-shadow(0 4px 12px #0005)}.header{height:88px;background:rgba(16,24,32,.98);border-bottom:4px solid var(--accent);display:grid;grid-template-columns:1fr 270px 1fr;align-items:stretch}.header.long-heading{grid-template-columns:1fr 330px 1fr}.header.long-heading .season{font-size:20px;line-height:1.05;white-space:nowrap;padding:0 18px;clip-path:polygon(4% 0,96% 0,100% 100%,0 100%)}.brand{display:flex;align-items:center;padding:0 24px;font-size:clamp(20px,2.2vw,32px);font-weight:900;letter-spacing:.035em;text-transform:uppercase}.season{display:flex;align-items:center;justify-content:center;background:var(--accent);color:var(--ink);font-size:24px;font-weight:900;text-transform:uppercase;clip-path:polygon(8% 0,92% 0,100% 100%,0 100%)}.meta{display:flex;align-items:center;justify-content:flex-end;padding:0 24px;color:var(--muted);font-size:14px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.tablebox{margin-top:10px;background:rgba(16,24,32,.98);border-top:3px solid var(--accent);padding-bottom:4px}table{width:100%;border-collapse:collapse;table-layout:fixed}thead{background:var(--panel2)}th{height:45px;padding:8px 9px;color:var(--accent);font-size:14px;letter-spacing:.06em;text-transform:uppercase;text-align:center;font-weight:900}th:nth-child(2){text-align:left;padding-left:18px}td{height:39px;padding:6px 9px;border-bottom:1px solid #34434d;text-align:center;font-size:18px;font-weight:700}tbody tr:nth-child(odd){background:#17232e}tbody tr:nth-child(even){background:#121c24}td:first-child{color:var(--accent);font-size:19px;font-weight:900}td:nth-child(2){text-align:left;padding-left:18px;font-size:19px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.teamcell{display:flex;align-items:center;gap:10px;min-width:0}.teamname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.points{color:var(--accent);font-size:22px;font-weight:900}.goals{white-space:nowrap}.status{display:flex;justify-content:space-between;padding:8px 12px;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em}.error{background:rgba(16,24,32,.97);border-left:4px solid var(--accent);padding:12px 14px;font-size:14px;color:#fff}.hidden{display:none!important}
+@media(max-width:800px){.header{height:64px;grid-template-columns:1fr 150px 1fr}.brand{font-size:16px;padding:0 10px}.season{font-size:16px}.meta{font-size:10px;padding:0 10px}.header.long-heading{grid-template-columns:1fr 190px 1fr}.header.long-heading .season{font-size:12px;padding:0 6px;clip-path:polygon(2% 0,98% 0,100% 100%,0 100%)}th{font-size:10px;padding:5px 3px;height:32px}td{font-size:13px;padding:4px 3px;height:30px}td:nth-child(2){font-size:13px;padding-left:7px}.points{font-size:15px}.status{font-size:8px}}
+</style></head><body>
+<div class="wrap" id="wrap"><div class="header"><div class="brand">BANDYLIIGA</div><div class="season" id="graphicTitle">Sarjataulukko</div><div aria-hidden="true"></div></div><div class="tablebox"><table aria-label="Ottelun sarjataulukko"><thead><tr><th style="width:6%">SIJ.</th><th style="width:32%">JOUKKUE</th><th style="width:7%">O</th><th style="width:7%">V</th><th style="width:7%">T</th><th style="width:7%">H</th><th style="width:14%">MAALIT</th><th style="width:8%">ME</th><th style="width:12%">P</th></tr></thead><tbody id="rows"><tr><td colspan="9">Haetaan sarjataulukkoa…</td></tr></tbody></table></div><div class="status"><span>JÄÄPALLO · MIESTEN BANDYLIIGA</span><span id="updated">HAETAAN SARJATIETOJA</span></div><div id="err" class="error hidden"></div></div>
+<script>(()=>{
+const q=new URLSearchParams(location.search),$=id=>document.getElementById(id);
+const matchId=(q.get('ottelu')||q.get('match')||'').trim();
+const refresh=Math.max(5,Math.min(300,Number(q.get('refresh')||30)));
+const clean=s=>String(s||'').replace(/\u00a0/g,' ').replace(/\s+/g,' ').trim();
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num=s=>{const m=String(s||'').replace(/\s/g,'').match(/-?\d+(?:[.,]\d+)?/);return m?Number(m[0].replace(',','.')):null};
+$('graphicTitle').textContent='Sarjataulukko';
+
+function normTeam(v){return clean(v).toLocaleLowerCase('fi-FI').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'')}
+function extractMatchTeams(doc){
+ const names=[...doc.querySelectorAll('.ottelujoukkue')].map(x=>clean(x.textContent)).filter(Boolean);
+ if(names.length>=2)return names.slice(0,2);
+ const candidates=[...doc.querySelectorAll('a[href*="joukkue.php"]')].map(a=>clean(a.textContent)).filter(Boolean);
+ const unique=[...new Set(candidates)];return unique.slice(0,2);
+}
+function rowsInTable(table){return [...table.querySelectorAll('tr')].filter(tr=>tr.closest('table')===table)}
+function parseMatchStandings(html,teamNames){
+ const doc=new DOMParser().parseFromString(html,'text/html');
+ const candidates=[];
+ for(const table of [...doc.querySelectorAll('table')]){
+  const parsed=[];const trs=rowsInTable(table);
+  for(const tr of trs){
+   const cs=[...tr.querySelectorAll(':scope > th,:scope > td')];if(!cs.length)continue;
+   const link=tr.querySelector('a[href*="joukkue.php"]');let teamCell=-1,team='';
+   if(link){const cell=link.closest('td,th');teamCell=cs.indexOf(cell);team=clean(link.innerText||link.textContent)}
+   if(!team){const vals=cs.map(c=>clean(c.innerText||c.textContent));const i=vals.findIndex(v=>/^(akilles|botnia|hifk|jps|kampparit|narukerä|narukera|ols|veiterä|veitera|wp\s*35|helsinki\s*\/\s*porvoo)$/i.test(v));if(i>=0){teamCell=i;team=vals[i]}}
+   if(!team||teamCell<0)continue;
+   const vals=cs.map(c=>clean(c.innerText||c.textContent));
+   const tail=vals.slice(teamCell+1).filter(Boolean);const stats=tail.slice(-6);
+   if(stats.length<6)continue;
+   const before=vals.slice(0,teamCell);const rank=before.map(v=>/^\d+$/.test(v)?v:null).filter(Boolean).pop()||String(parsed.length+1);
+   const gm=String(stats[4]).match(/(-?\d+)\s*[-–:]\s*(-?\d+)/);
+   parsed.push({rank,team,played:stats[0],wins:stats[1],draws:stats[2],losses:stats[3],goals:stats[4],diff:gm?String(Number(gm[1])-Number(gm[2])):'–',points:stats[5]});
+  }
+  if(parsed.length)candidates.push({parsed,score:parsed.length*10+Math.min(trs.length,30)});
+ }
+ candidates.sort((a,b)=>b.score-a.score);const data=candidates[0]?.parsed||[];
+ if(!data.length)throw Error('Ottelusivun sarjataulukkoa ei tunnistettu. Varmista, että ottelusivulla näkyy sarjataulukko ja joukkueiden joukkuesivulinkit.');
+ const active=teamNames.map(normTeam);
+ return data.map(r=>({...r,active:active.includes(normTeam(r.team))}));
+}
+function render(data){$('rows').innerHTML='';for(const r of data){const tr=document.createElement('tr');if(r.active)tr.style.background='#293b49';const vals=[r.rank,r.team,r.played,r.wins,r.draws,r.losses,r.goals,r.diff,r.points];vals.forEach((v,i)=>{const td=document.createElement('td');if(i===1){const d=document.createElement('div');d.className='teamcell';const n=document.createElement('span');n.className='teamname';n.textContent=v;d.append(n);td.append(d)}else{td.textContent=v;if(i===8)td.className='points';if(i===6)td.className='goals'}tr.append(td)});$('rows').append(tr)}fit()}
+function fit(){const wrap=$('wrap');wrap.style.setProperty('--width',Math.max(600,Math.min(1120,Number(q.get('width')||1120)))+'px');const maxH=innerHeight-16;wrap.style.setProperty('--scale','1');const naturalW=wrap.offsetWidth,naturalH=wrap.offsetHeight;let scale=Math.min(1,(innerWidth-16)/naturalW,maxH/naturalH);if(q.has('scale'))scale=Math.min(2,Math.max(.3,Number(q.get('scale'))/100||1));wrap.style.setProperty('--scale',String(scale))}
+function unavailable(message){$('rows').innerHTML='';const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=9;td.textContent=message;td.style.cssText='height:96px;text-align:center;color:#bdc7d0;font-size:18px;font-weight:800';tr.append(td);$('rows').append(tr);$('updated').textContent='EI SAATAVILLA';fit()}
+async function update(){if(!matchId){unavailable('LISÄÄ OTTELUN ID URL-PARAMETRIIN ?ottelu=...');return}try{$('updated').textContent='HAETAAN OTTELUSIVUA';const u=new URL('/api/match',location.origin);u.searchParams.set('ottelu',matchId);const r=await fetch(q.get('matchApi')||u.toString(),{cache:'no-store'});const body=await r.text();if(!r.ok)throw Error('Ottelusivun haku epäonnistui (HTTP '+r.status+'). '+clean(body).slice(0,150));const doc=new DOMParser().parseFromString(body,'text/html');const teams=extractMatchTeams(doc);const rows=parseMatchStandings(body,teams);render(rows);$('updated').textContent='OTTELU '+matchId+' · PÄIVITETTY '+new Date().toLocaleTimeString('fi-FI',{hour:'2-digit',minute:'2-digit',second:'2-digit'});$('err').classList.add('hidden')}catch(e){$('err').textContent=e.message||String(e);$('err').classList.remove('hidden');unavailable('SARJATAULUKON HAKU EPÄONNISTUI')}}
+update();setInterval(update,refresh*1000);addEventListener('resize',fit);
+})();</script></body></html>
